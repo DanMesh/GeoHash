@@ -13,7 +13,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <iostream>
-#include <map>
+#include <chrono>
 
 using namespace std;
 using namespace cv;
@@ -58,6 +58,8 @@ static float defaultZ = 500;
 
 int main(int argc, const char * argv[]) {
     
+    auto startHash = chrono::system_clock::now(); // Start hashing timer
+    
     vector<HashTable> tables;
     
     Box modelBox = Box(60, 80, 30);
@@ -79,10 +81,7 @@ int main(int argc, const char * argv[]) {
             Mat proj = lsq::projection(pose, modelMat, K);
             vector<Point2f> projPts = matToPoints(proj);
             vector<bool> vis = modelBox.visibilityMask(angleX, angleY);
-            
-            //TRACE
-            debugShowBoxPoints(projPts, vis);
-            
+
             for (int i = 0; i < basisList.size(); i++) {
                 vector<int> basisIndex = basisList[i];
                 
@@ -94,7 +93,7 @@ int main(int argc, const char * argv[]) {
         }
     }
     
-    
+    auto endHash = chrono::system_clock::now();
      
     // * * * * * * * * * * * * * * * * *
     //   Create a set of image points
@@ -124,6 +123,8 @@ int main(int argc, const char * argv[]) {
     // * * * * * * * * * * * * * *
     //      RECOGNITION
     // * * * * * * * * * * * * * *
+    
+    auto startRecog = chrono::system_clock::now(); // Start recognition timer
     
     vector<int> imgBasis = {0,1};    // The "random" basis
 
@@ -157,6 +158,13 @@ int main(int argc, const char * argv[]) {
             estList.push_back(est);
         }
     }
+    
+    auto endRecog = chrono::system_clock::now();
+    
+    chrono::duration<double> timeHash = endHash-startHash;
+    cout << "Hashing time     = " << timeHash.count()*1000.0 << " ms" << endl;
+    chrono::duration<double> timeRecog = endRecog-startRecog;
+    cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
     
     cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
 
