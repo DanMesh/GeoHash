@@ -54,21 +54,24 @@ bool Box::vertexIsVisible(int vertexID, float xAngle, float yAngle) {
 
 vector<bool> Box::visibilityMask(float xAngle, float yAngle) {
     vector<bool> mask;
-    for (int i = 0; i < vertices.size(); i++) {
+    for (int i = 0; i < 8; i++) {
         mask.push_back(vertexIsVisible(i, xAngle, yAngle));
     }
     return mask;
 }
 
 void Box::createPoints(float w, float h, float d) {
-    Point3f p0 = Point3f(0, 0, 0);
-    Point3f p1 = Point3f(w, 0, 0);
-    Point3f p2 = Point3f(w, h, 0);
-    Point3f p3 = Point3f(0, h, 0);
-    Point3f p4 = Point3f(0, 0, d);
-    Point3f p5 = Point3f(w, 0, d);
-    Point3f p6 = Point3f(w, h, d);
-    Point3f p7 = Point3f(0, h, d);
+    w = w/2;
+    h = h/2;
+    d = d/2;
+    Point3f p0 = Point3f(-w, -h, -d);
+    Point3f p1 = Point3f( w, -h, -d);
+    Point3f p2 = Point3f( w,  h, -d);
+    Point3f p3 = Point3f(-w,  h, -d);
+    Point3f p4 = Point3f(-w, -h,  d);
+    Point3f p5 = Point3f( w, -h,  d);
+    Point3f p6 = Point3f( w,  h,  d);
+    Point3f p7 = Point3f(-w,  h,  d);
     vertices = {p0, p1, p2, p3, p4, p5, p6, p7};
 }
 

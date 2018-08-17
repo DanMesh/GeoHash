@@ -15,6 +15,7 @@ HashTable hashing::createTable(vector<int> basisID, vector<Point2f> modelPoints,
     vector<Point2f> basis = { modelPoints[basisID[0]], modelPoints[basisID[1]] };
     
     for (int j = 0; j < modelPoints.size(); j++) {
+        // Do not hash basis or invisible points
         if (j == basisID[0] || j == basisID[1] || !visible[j]) continue;
         Point2f bc = basisCoords(basis, modelPoints[j]);
         gh.add_point( point(bc.x, bc.y, j) );
@@ -81,6 +82,7 @@ vector<Mat> hashing::getOrderedPoints(vector<int> imgBasis, HashTable ht, vector
             vector<point> binPoints = ht.table.points_in_bin(pt);
             
             if (binPoints.size() > 0) {
+                // Take the first point in the bin
                 int modelPt_ID = binPoints[0].getID();
                 
                 orderedModelPoints.push_back(modelPoints[modelPt_ID]);

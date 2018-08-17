@@ -20,8 +20,8 @@ public:
     Box(float width, float height, float depth) {
         createPoints(width, height, depth);
     }
-    bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
-    vector<bool> visibilityMask(float xAngle, float yAngle);
+    static bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
+    static vector<bool> visibilityMask(float xAngle, float yAngle);
     vector<Point3f> vertices;
     Mat pointsToMat();
     

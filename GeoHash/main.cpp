@@ -29,6 +29,7 @@ Mat pointsToMat(vector<Point2f> points);
 Mat reformModelMat(vector<Point2f> modelPoints2D);
 vector<vector<int>> createBasisList(int numPoints);
 bool vectorContains(vector<int> vec, int query);
+void debugShowBoxPoints(vector<Point2f> points, vector<bool> visibility);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -51,8 +52,8 @@ static float rectModel[4][4] = {
 static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
 static float binWidth = 2;
-static int numBinsX = 4;
-static float defaultZ = 700;
+static int numBinsX = 12;
+static float defaultZ = 500;
 
 
 int main(int argc, const char * argv[]) {
@@ -82,38 +83,16 @@ int main(int argc, const char * argv[]) {
             vector<Point2f> projPts = matToPoints(proj);
             vector<bool> vis = modelBox.visibilityMask(angleX, angleY);
             
-            // * TRACE *
-            cout << proj << endl;
-            Mat img = Mat(900, 1200, CV_32FC3);
-            Point p1 = Point(projPts[0]);
-            Point p2 = Point(projPts[1]);
-            Point p3 = Point(projPts[2]);
-            Point p4 = Point(projPts[3]);
-            Point p5 = Point(projPts[4]);
-            Point p6 = Point(projPts[5]);
-            Point p7 = Point(projPts[6]);
-            Point p8 = Point(projPts[7]);
-            line(img, p1, p2, Scalar(0,0,255), 1);
-            line(img, p2, p3, Scalar(0,0,255), 1);
-            line(img, p3, p4, Scalar(0,0,255), 1);
-            line(img, p4, p1, Scalar(0,0,255), 1);
-            line(img, p1, p5, Scalar(255,255,255), 1);
-            line(img, p2, p6, Scalar(255,255,255), 1);
-            line(img, p3, p7, Scalar(255,255,255), 1);
-            line(img, p4, p8, Scalar(255,255,255), 1);
-            line(img, p5, p6, Scalar(255,255,255), 1);
-            line(img, p6, p7, Scalar(255,255,255), 1);
-            line(img, p7, p8, Scalar(255,255,255), 1);
-            line(img, p8, p5, Scalar(255,255,255), 1);
-            namedWindow( "Projection", CV_WINDOW_AUTOSIZE );
-            imshow("Projection",img);
-            waitKey(0);
-            
-            // * END TRACE *
+            //TRACE
+            debugShowBoxPoints(projPts, vis);
             
             cout << "Hashing...";
             for (int i = 0; i < basisList.size(); i++) {
                 vector<int> basisIndex = basisList[i];
+                
+                // Don't make a hash table if the basis isn't visible
+                if (!vis[basisIndex[0]] || !vis[basisIndex[1]]) continue;
+                
                 tables.push_back(hashing::createTable(basisIndex, projPts, vis, binWidth, {xBin, yBin}));
             }
             cout << "Done" << endl;
@@ -126,13 +105,26 @@ int main(int argc, const char * argv[]) {
     //   Create a set of image points
     // * * * * * * * * * * * * * * * * *
     
-    Vec6f pose = {30, 12, 500, CV_PI/2, CV_PI/2, 0};
-    Mat img = lsq::projection(pose, x, K);
-    vector<Point2f> imgPoints = matToPoints(img);
+    float rX = CV_PI/3;
+    float rY = -CV_PI/4;
+    
+    Vec6f pose = {30, 12, 500, rX, rY, 0};
+    Mat img = lsq::projection(pose, modelMat, K);
+    vector<Point2f> imgPointsAll = matToPoints(img);
+    vector<Point2f> imgPoints;
+    vector<bool> visMask = Box::visibilityMask(rX, rY);
+    
+    for (int i = 0; i < imgPointsAll.size(); i++) {
+        if (visMask[i]) imgPoints.push_back(imgPointsAll[i]);
+    }
+    
     Point2f noisePoint = Point2f(550,550);
     //imgPoints.push_back(noisePoint);
     
     cout << "MODEL = " << endl << modelPoints << endl << endl << "IMAGE = " << endl << imgPoints << endl << endl;
+    
+    debugShowBoxPoints(imgPoints, visMask);
+    //waitKey(0);
     
     // * * * * * * * * * * * * * *
     //      RECOGNITION
@@ -141,14 +133,7 @@ int main(int argc, const char * argv[]) {
     vector<int> imgBasis = {0,1};    // The "random" basis
 
     vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
-    
-    //TRACE
-    cout << "Basis Votes:" << endl;
-    for (int i = 0; i < votedTables.size(); i++) {
-        HashTable vt = votedTables[i];
-        cout << vt.basis[0] << "," << vt.basis[1] << "  " << vt.viewAngle[0] << "," << vt.viewAngle[1] << " - " << vt.votes << endl;
-    }
-    
+
     // Use least squares to match the tables with the most votes
     int maxVotes = votedTables[0].votes;
     cout << "MAX VOTES = " << maxVotes << endl << endl;
@@ -157,39 +142,29 @@ int main(int argc, const char * argv[]) {
     
     for (int i = 0; i < votedTables.size(); i++) {
         HashTable t = votedTables[i];
-        if (t.votes < maxVotes) break;
+        if (t.votes < MIN(100, maxVotes)) break;
         
         vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
         
         Mat newModel = orderedPoints[0];
         Mat newTarget = orderedPoints[1];
         
-        //cout << "newModel = \n" << newModel << endl;
-        //cout << "newTarget = \n" << newTarget << endl;
-        //cout << "basis = " << t.basis[0] << "," << t.basis[1] << endl;
-        
         float xAngle = dA * (0.5 + t.viewAngle[0]);
         float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
-        Vec6f poseInit = {0, 0, 500, xAngle, yAngle, 0};
+        Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
         estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
         
         if (est.iterations != lsq::MAX_ITERATIONS) {
-            //cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << endl;
-            //est.print();
+            //TRACE
+            cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+            
+            est.print();
             successes++;
         }
     }
     
     cout << endl << successes << "/" << votedTables.size() << " successes!" << endl;
-    
-    cout << "\n * * * * * * * * * * *\n" << endl;
-    
-    Box b = Box(60, 80, 30);
-    for (int i = 0; i < 8; i++) {
-        cout << i << " " << b.vertexIsVisible(i, 5*CV_PI/4, -0.25*CV_PI) << endl;
-    }
-    cout << b.pointsToMat() << endl << endl;
-    
+
     return 0;
 }
 
@@ -259,4 +234,29 @@ bool vectorContains(vector<int> vec, int query) {
         if (vec[i] == query) return true;
     }
     return false;
+}
+
+void debugShowBoxPoints(vector<Point2f> points, vector<bool> visibility) {
+    // Show the visibile points on the image
+    Mat img = Mat::zeros(900, 1200, CV_32FC3);
+    vector<vector<int>> edges = Box::edgeBasisList;
+    for (int i = 0; i < edges.size(); i++) {
+        int id1 = edges[i][0];
+        int id2 = edges[i][1];
+        if (!visibility[id1] || !visibility[id2]) continue;
+        
+        Point p1 = Point(points[id1]);
+        Point p2 = Point(points[id2]);
+        line(img, p1, p2, Scalar(0,0,255));
+    }
+
+    for (int i = 0; i < visibility.size(); i++) {
+        cout << visibility[i] << " ";
+        putText(img, to_string(i) , Point(points[i]), FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar(255,255,250));
+    }
+    cout << endl;
+    
+    namedWindow( "Debug", CV_WINDOW_AUTOSIZE );
+    imshow("Debug",img);
+    //waitKey(0);
 }
