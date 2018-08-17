@@ -51,17 +51,14 @@ static float rectModel[4][4] = {
 };
 static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
-static float binWidth = 2;
+static float binWidth = 1.75;
 static int numBinsX = 12;
 static float defaultZ = 500;
 
 
 int main(int argc, const char * argv[]) {
     
-    
     vector<HashTable> tables;
-    //vector<Point2f> modelPoints = matToPoints(x);
-    
     
     Box modelBox = Box(60, 80, 30);
     Mat modelMat = modelBox.pointsToMat();
@@ -86,7 +83,6 @@ int main(int argc, const char * argv[]) {
             //TRACE
             debugShowBoxPoints(projPts, vis);
             
-            cout << "Hashing...";
             for (int i = 0; i < basisList.size(); i++) {
                 vector<int> basisIndex = basisList[i];
                 
@@ -95,7 +91,6 @@ int main(int argc, const char * argv[]) {
                 
                 tables.push_back(hashing::createTable(basisIndex, projPts, vis, binWidth, {xBin, yBin}));
             }
-            cout << "Done" << endl;
         }
     }
     
@@ -105,10 +100,10 @@ int main(int argc, const char * argv[]) {
     //   Create a set of image points
     // * * * * * * * * * * * * * * * * *
     
-    float rX = CV_PI/3;
+    float rX = 0.6 * CV_PI;
     float rY = -CV_PI/4;
     
-    Vec6f pose = {30, 12, 500, rX, rY, 0};
+    Vec6f pose = {70, 12, 650, rX, rY, 0};
     Mat img = lsq::projection(pose, modelMat, K);
     vector<Point2f> imgPointsAll = matToPoints(img);
     vector<Point2f> imgPoints;
@@ -138,11 +133,11 @@ int main(int argc, const char * argv[]) {
     int maxVotes = votedTables[0].votes;
     cout << "MAX VOTES = " << maxVotes << endl << endl;
     
-    int successes = 0;
+    vector<estimate> estList;
     
     for (int i = 0; i < votedTables.size(); i++) {
         HashTable t = votedTables[i];
-        if (t.votes < MIN(100, maxVotes)) break;
+        if (t.votes < MIN(200, maxVotes)) break;
         
         vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
         
@@ -159,11 +154,11 @@ int main(int argc, const char * argv[]) {
             cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
             
             est.print();
-            successes++;
+            estList.push_back(est);
         }
     }
     
-    cout << endl << successes << "/" << votedTables.size() << " successes!" << endl;
+    cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
 
     return 0;
 }

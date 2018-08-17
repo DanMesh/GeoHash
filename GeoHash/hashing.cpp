@@ -40,8 +40,8 @@ vector<HashTable> hashing::voteForTables(vector<HashTable> tables, vector<Point2
         // Check for matches in each table
         for (int j = 0; j < tables.size(); j++) {
             vector<point> points = tables[j].table.points_in_bin(pt);
-            //tables[j].votes += points.size();
-            if (points.size() > 0) tables[j].votes += 1;
+            tables[j].votes += points.size();
+            //if (points.size() > 0) tables[j].votes += 1;
         }
     }
     sort(tables.begin(), tables.end(), greater<HashTable>());

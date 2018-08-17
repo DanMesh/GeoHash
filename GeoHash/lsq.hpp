@@ -23,8 +23,11 @@ using namespace cv;
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 class estimate {
 public:
-    estimate( Vec6f pose_in, float error_in, float iter_in ) : pose(pose_in), error(error_in), iterations(iter_in) {}
+    estimate( Vec6f pose_in, float error_in, float iter_in ) : pose(standardisePose(pose_in)), error(error_in), iterations(iter_in) {}
     void print() {cout << pose << "\nIterations = " << iterations << "\nError = " << error << "\n\n";}
+private:
+    static Vec6f standardisePose(Vec6f pose);
+    
 public:
     Vec6f pose;
     float error, iterations;

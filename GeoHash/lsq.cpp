@@ -141,3 +141,12 @@ Mat lsq::jacobian(Vec6f pose, Mat model, Mat K) {
     
     return J;
 }
+
+Vec6f estimate::standardisePose(Vec6f pose) {
+    // Ensures all angles are in (-PI,PI]
+    for (int i = 3; i < 6; i++) {
+        while (pose[i] > CV_PI)     pose[i] -= CV_2PI;
+        while (pose[i] <= -CV_PI)   pose[i] += CV_2PI;
+    }
+    return pose;
+}
