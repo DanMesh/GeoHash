@@ -29,7 +29,7 @@ Mat pointsToMat(vector<Point2f> points);
 Mat reformModelMat(vector<Point2f> modelPoints2D);
 vector<vector<int>> createBasisList(int numPoints);
 bool vectorContains(vector<int> vec, int query);
-void debugShowBoxPoints(vector<Point2f> points, vector<bool> visibility);
+void debugShowBoxPoints(vector<Point2f> points, vector<vector<int>> edges, vector<bool> visibility);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -62,12 +62,13 @@ int main(int argc, const char * argv[]) {
     
     vector<HashTable> tables;
     
-    Box modelBox = Box(60, 80, 30);
-    Mat modelMat = modelBox.pointsToMat();
-    vector<Point3f> modelPoints = modelBox.vertices;
+    Model * mod = new Box(60, 80, 30);
+    //Model * model = new Rectangle(60, 80);
+    Mat modelMat = model->pointsToMat();
+    vector<Point3f> modelPoints = model->getVertices();
     
     // A list of model basis pairs
-    vector<vector<int>> basisList = modelBox.edgeBasisList;
+    vector<vector<int>> basisList = model->getEdgeBasisList();
     
     
     float dA = 2 * CV_PI / numBinsX;    // Bin width
@@ -80,7 +81,7 @@ int main(int argc, const char * argv[]) {
             Vec6f pose = {0, 0, defaultZ, angleX, angleY, 0};
             Mat proj = lsq::projection(pose, modelMat, K);
             vector<Point2f> projPts = matToPoints(proj);
-            vector<bool> vis = modelBox.visibilityMask(angleX, angleY);
+            vector<bool> vis = model->visibilityMask(angleX, angleY);
 
             for (int i = 0; i < basisList.size(); i++) {
                 vector<int> basisIndex = basisList[i];
@@ -106,7 +107,7 @@ int main(int argc, const char * argv[]) {
     Mat img = lsq::projection(pose, modelMat, K);
     vector<Point2f> imgPointsAll = matToPoints(img);
     vector<Point2f> imgPoints;
-    vector<bool> visMask = Box::visibilityMask(rX, rY);
+    vector<bool> visMask = model->visibilityMask(rX, rY);
     
     for (int i = 0; i < imgPointsAll.size(); i++) {
         if (visMask[i]) imgPoints.push_back(imgPointsAll[i]);
@@ -117,7 +118,7 @@ int main(int argc, const char * argv[]) {
     
     cout << "MODEL = " << endl << modelPoints << endl << endl << "IMAGE = " << endl << imgPoints << endl << endl;
     
-    debugShowBoxPoints(imgPoints, visMask);
+    //debugShowBoxPoints(imgPoints, mod->getEdgeBasisList(), visMask);
     //waitKey(0);
     
     // * * * * * * * * * * * * * *
@@ -239,10 +240,9 @@ bool vectorContains(vector<int> vec, int query) {
     return false;
 }
 
-void debugShowBoxPoints(vector<Point2f> points, vector<bool> visibility) {
+void debugShowBoxPoints(vector<Point2f> points, vector<vector<int>> edges, vector<bool> visibility) {
     // Show the visibile points on the image
     Mat img = Mat::zeros(900, 1200, CV_32FC3);
-    vector<vector<int>> edges = Box::edgeBasisList;
     for (int i = 0; i < edges.size(); i++) {
         int id1 = edges[i][0];
         int id2 = edges[i][1];

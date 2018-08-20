@@ -9,6 +9,9 @@
 #include "models.hpp"
 
 
+// * * * * * * * * * * * * * * *
+//      Box
+// * * * * * * * * * * * * * * *
 
 const vector<vector<float>> Box::xAngleLimits = {
     {1.0*CV_PI, 1.5*CV_PI}, {1.0*CV_PI, 1.5*CV_PI},
@@ -21,17 +24,6 @@ const vector<vector<float>> Box::yAngleLimits = {
     {1.5*CV_PI, 2.0*CV_PI}, {0.0*CV_PI, 0.5*CV_PI},
     {0.0*CV_PI, 0.5*CV_PI}, {1.5*CV_PI, 2.0*CV_PI},
     {1.5*CV_PI, 2.0*CV_PI}, {0.0*CV_PI, 0.5*CV_PI}
-};
-
-const vector<vector<int>> Box::edgeBasisList = {
-    {0,1}, {1,2}, {2,3}, {3,0},
-    {1,0}, {2,1}, {3,2}, {0,3},
-    
-    {4,5}, {5,6}, {6,7}, {7,4},
-    {5,4}, {6,5}, {7,6}, {4,7},
-    
-    {0,4}, {1,5}, {2,6}, {3,7},
-    {4,0}, {5,1}, {6,2}, {7,3}
 };
 
 bool Box::vertexIsVisible(int vertexID, float xAngle, float yAngle) {
@@ -76,6 +68,41 @@ void Box::createPoints(float w, float h, float d) {
 }
 
 Mat Box::pointsToMat() {
+    Mat ret = Mat(4, int(vertices.size()), CV_32FC1);
+    for (int i = 0; i < vertices.size(); i++) {
+        Point3f p = vertices[i];
+        ret.at<float>(0, i) = p.x;
+        ret.at<float>(1, i) = p.y;
+        ret.at<float>(2, i) = p.z;
+        ret.at<float>(3, i) = 1;
+    }
+    return ret * 1;
+}
+
+
+// * * * * * * * * * * * * * * *
+//      Rectangle
+// * * * * * * * * * * * * * * *
+
+bool Rectangle::vertexIsVisible(int vertexID, float xAngle, float yAngle) {
+    return true;
+}
+
+vector<bool> Rectangle::visibilityMask(float xAngle, float yAngle) {
+    return {true, true, true, true};
+}
+
+void Rectangle::createPoints(float w, float h) {
+    w = w/2;
+    h = h/2;
+    Point3f p0 = Point3f(-w, -h, 0);
+    Point3f p1 = Point3f( w, -h, 0);
+    Point3f p2 = Point3f( w,  h, 0);
+    Point3f p3 = Point3f(-w,  h, 0);
+    vertices = {p0, p1, p2, p3};
+}
+
+Mat Rectangle::pointsToMat() {
     Mat ret = Mat(4, int(vertices.size()), CV_32FC1);
     for (int i = 0; i < vertices.size(); i++) {
         Point3f p = vertices[i];
