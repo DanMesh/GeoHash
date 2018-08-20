@@ -18,7 +18,7 @@
 		37F5B3F02125777500B11C5B /* models.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37F5B3EE2125777500B11C5B /* models.cpp */; };
 		37FBA709212B2CF800F6E89A /* orange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37FBA707212B2CF800F6E89A /* orange.cpp */; };
 		37FBA70C212B2DD100F6E89A /* edgy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37FBA70B212B2DD100F6E89A /* edgy.cpp */; };
-		37FBA70E212B309B00F6E89A /* libopencv_videoio.3.4.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 37FBA70D212B309A00F6E89A /* libopencv_videoio.3.4.2.dylib */; };
+		37FBA711212B524200F6E89A /* libopencv_videoio.3.4.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 37FBA710212B524200F6E89A /* libopencv_videoio.3.4.2.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -52,7 +52,7 @@
 		37FBA708212B2CF800F6E89A /* orange.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = orange.hpp; sourceTree = "<group>"; };
 		37FBA70A212B2DD100F6E89A /* edgy.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = edgy.hpp; sourceTree = "<group>"; };
 		37FBA70B212B2DD100F6E89A /* edgy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = edgy.cpp; sourceTree = "<group>"; };
-		37FBA70D212B309A00F6E89A /* libopencv_videoio.3.4.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libopencv_videoio.3.4.2.dylib; sourceTree = "<group>"; };
+		37FBA710212B524200F6E89A /* libopencv_videoio.3.4.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videoio.3.4.2.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.4.2/lib/libopencv_videoio.3.4.2.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +62,7 @@
 			files = (
 				379AACB52121DFA1000F65A0 /* libopencv_highgui.3.4.2.dylib in Frameworks */,
 				379AACB42121DFA1000F65A0 /* libopencv_core.3.4.2.dylib in Frameworks */,
-				37FBA70E212B309B00F6E89A /* libopencv_videoio.3.4.2.dylib in Frameworks */,
+				37FBA711212B524200F6E89A /* libopencv_videoio.3.4.2.dylib in Frameworks */,
 				379AACB62121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -73,7 +73,7 @@
 		379AAC9E2121DF6A000F65A0 = {
 			isa = PBXGroup;
 			children = (
-				37FBA70D212B309A00F6E89A /* libopencv_videoio.3.4.2.dylib */,
+				37FBA710212B524200F6E89A /* libopencv_videoio.3.4.2.dylib */,
 				379AACB12121DFA1000F65A0 /* libopencv_core.3.4.2.dylib */,
 				379AACB22121DFA1000F65A0 /* libopencv_highgui.3.4.2.dylib */,
 				379AACB32121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib */,

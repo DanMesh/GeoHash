@@ -158,6 +158,9 @@ int main(int argc, const char * argv[]) {
         // Get the detected lines
         lines = orange::borderLines(imgResult);
         
+        // Try again if no lines found
+        if (lines.size() <= 0) continue;
+        
         // TRACE: Display the lines on the images
         for(int i = 0; i < lines.size(); i++) {
             Vec4i l = lines[i];
@@ -171,13 +174,8 @@ int main(int argc, const char * argv[]) {
             line(imgResult, p1, p2, colour, 1);
         }
         
-        // TRACE: Display the images
-        imshow("imgResult", imgResult);
-        imshow("img", img);
-        
         // TRACE: [Temporary] Only try if > 4 lines
         //if (lines.size() < 4) continue ;
-        
         //lines.resize(4);
         
         // Create the Mat of edge endpoints
@@ -236,6 +234,19 @@ int main(int argc, const char * argv[]) {
         chrono::duration<double> timeRecog = endRecog-startRecog;
         cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
         cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
+        
+        if (estList.size() > 0) {
+            Mat proj = lsq::projection(estList[0].pose, modelMat, K);
+            vector<Point2f> projPts = matToPoints(proj);
+            line(imgResult, Point(projPts[0]), Point(projPts[1]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[1]), Point(projPts[2]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[2]), Point(projPts[3]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[3]), Point(projPts[0]), Scalar(255,255,255));
+        }
+        
+        // TRACE: Display the images
+        imshow("imgResult", imgResult);
+        imshow("img", img);
         
         // Press 'w' to escape
         if(waitKey(0) == 'w') {cout << "***\n"; break;}

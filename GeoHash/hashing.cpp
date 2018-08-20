@@ -31,6 +31,7 @@ vector<HashTable> hashing::voteForTables(vector<HashTable> tables, vector<Point2
     tables = clearVotes(tables);
     
     vector<Point2f> basis = { imgPoints[imgBasis[0]], imgPoints[imgBasis[1]] };
+    vector<bin_index> basisBins = {tables[0].table.point_to_bin(point(-1, 0)), tables[0].table.point_to_bin(point(1, 0))};
     
     for (int i = 0; i < imgPoints.size(); i++) {
         if (i == imgBasis[0] || i == imgBasis[1]) continue;
@@ -39,6 +40,10 @@ vector<HashTable> hashing::voteForTables(vector<HashTable> tables, vector<Point2
         
         // Check for matches in each table
         for (int j = 0; j < tables.size(); j++) {
+            // Skip points in the same bin as the basis
+            bin_index bi = tables[j].table.point_to_bin(pt);
+            if (bi.sameAs(basisBins[0]) || bi.sameAs(basisBins[1])) continue;
+            
             vector<point> points = tables[j].table.points_in_bin(pt);
             tables[j].votes += points.size();
             //if (points.size() > 0) tables[j].votes += 1;
