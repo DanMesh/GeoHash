@@ -6,10 +6,12 @@
 //  Copyright © 2018 Daniel Mesham. All rights reserved.
 //
 
+#include "edgy.hpp"
 #include "geo_hash.h"
 #include "hashing.hpp"
 #include "lsq.hpp"
 #include "models.hpp"
+#include "orange.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <iostream>
@@ -51,19 +53,45 @@ static float rectModel[4][4] = {
 };
 static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
-static float binWidth = 1.75;
-static int numBinsX = 12;
+static float binWidth = 2;
+static int numBinsX = 4;
 static float defaultZ = 500;
 
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+//      Main Method
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 int main(int argc, const char * argv[]) {
+    
+    VideoCapture cap(0); // Open the default camera
+    if(!cap.isOpened())  // Check if we succeeded
+        return -1;
+    
+    // Segmentation by colour
+    // Using HSV (Hue, Saturation, Brightness)
+    // From https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/
+    Mat3b bgr (Vec3b(25, 95, 215));
+    
+    Mat3b hsv;
+    cvtColor(bgr, hsv, COLOR_BGR2HSV);
+    Vec3b hsvPixel(hsv.at<Vec3b>(0,0));
+    
+    int thr[3] = {20, 50, 50};
+    Scalar minHSV = Scalar(hsvPixel.val[0] - thr[0], hsvPixel.val[1] - thr[1], hsvPixel.val[2] - thr[2]);
+    Scalar maxHSV = Scalar(hsvPixel.val[0] + thr[0], hsvPixel.val[1] + thr[1], hsvPixel.val[2] + thr[2]);
+    
+    // * * * * * * * * * * * * * * * * *
+    //   HASHING
+    // * * * * * * * * * * * * * * * * *
     
     auto startHash = chrono::system_clock::now(); // Start hashing timer
     
     vector<HashTable> tables;
     
-    Model * model = new Box(60, 80, 30);
-    //Model * model = new Rectangle(60, 80);
+    //Model * model = new Box(60, 80, 30);
+    Model * model = new Rectangle(60, 80);
     Mat modelMat = model->pointsToMat();
     vector<Point3f> modelPoints = model->getVertices();
     
@@ -95,82 +123,138 @@ int main(int argc, const char * argv[]) {
     }
     
     auto endHash = chrono::system_clock::now();
-     
+    
+    
     // * * * * * * * * * * * * * * * * *
-    //   Create a set of image points
+    //   CAMERA INPUT LOOP
     // * * * * * * * * * * * * * * * * *
     
-    float rX = 0.6 * CV_PI;
-    float rY = -CV_PI/4;
-    
-    Vec6f pose = {70, 12, 650, rX, rY, 0};
-    Mat img = lsq::projection(pose, modelMat, K);
-    vector<Point2f> imgPointsAll = matToPoints(img);
-    vector<Point2f> imgPoints;
-    vector<bool> visMask = model->visibilityMask(rX, rY);
-    
-    for (int i = 0; i < imgPointsAll.size(); i++) {
-        if (visMask[i]) imgPoints.push_back(imgPointsAll[i]);
-    }
-    
-    Point2f noisePoint = Point2f(550,550);
-    //imgPoints.push_back(noisePoint);
-    
-    cout << "MODEL = " << endl << modelPoints << endl << endl << "IMAGE = " << endl << imgPoints << endl << endl;
-    
-    //debugShowBoxPoints(imgPoints, mod->getEdgeBasisList(), visMask);
-    //waitKey(0);
-    
-    // * * * * * * * * * * * * * *
-    //      RECOGNITION
-    // * * * * * * * * * * * * * *
-    
-    auto startRecog = chrono::system_clock::now(); // Start recognition timer
-    
-    vector<int> imgBasis = {0,1};    // The "random" basis
-
-    vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
-
-    // Use least squares to match the tables with the most votes
-    int maxVotes = votedTables[0].votes;
-    cout << "MAX VOTES = " << maxVotes << endl << endl;
-    
-    vector<estimate> estList;
-    
-    for (int i = 0; i < votedTables.size(); i++) {
-        HashTable t = votedTables[i];
-        if (t.votes < MIN(200, maxVotes)) break;
+    namedWindow("imgResult", CV_WINDOW_AUTOSIZE);
+    namedWindow("img", CV_WINDOW_AUTOSIZE);
+    Mat img, imgLAB, imgHSV, imgResult;
+    vector<Vec4i> lines;
+    while(1) {
+        cap >> img;
         
-        vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
+        Mat imgMask;
+        imgResult = Mat();
         
-        Mat newModel = orderedPoints[0];
-        Mat newTarget = orderedPoints[1];
+        // Segmentation using the HSV color
+        cvtColor(img, imgHSV, COLOR_BGR2HSV);
+        inRange(imgHSV, minHSV, maxHSV, imgMask);
+        bitwise_and(img, img, imgResult, imgMask);
         
-        float xAngle = dA * (0.5 + t.viewAngle[0]);
-        float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
-        Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
-        estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
+        // Blur the segmented image
+        Mat blurred;
+        GaussianBlur(imgResult, blurred, Size(0,0), 3);
+        addWeighted(imgResult, 1.5, blurred, -0.5, 0, imgResult);
         
-        if (est.iterations != lsq::MAX_ITERATIONS) {
-            //TRACE
-            cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+        // Use opening and closing for noise removal
+        int k = 3;
+        Mat kernel = getStructuringElement(MORPH_RECT, Size(2*k + 1, 2*k + 1), Point(k, k));
+        morphologyEx(imgResult, imgResult, MORPH_OPEN, kernel);
+        morphologyEx(imgResult, imgResult, MORPH_CLOSE, kernel);
+        
+        // Get the detected lines
+        lines = orange::borderLines(imgResult);
+        
+        // TRACE: Display the lines on the images
+        for(int i = 0; i < lines.size(); i++) {
+            Vec4i l = lines[i];
+            Point p1 = Point(l[0], l[1]);
+            Point p2 = Point(l[2], l[3]);
             
-            est.print();
-            estList.push_back(est);
+            Scalar colour = Scalar(0,255,0);
+            if (i >= 4) colour = Scalar(0,0,255);
+            
+            line(img, p1, p2, colour, 1);
+            line(imgResult, p1, p2, colour, 1);
         }
+        
+        // TRACE: Display the images
+        imshow("imgResult", imgResult);
+        imshow("img", img);
+        
+        // TRACE: [Temporary] Only try if > 4 lines
+        //if (lines.size() < 4) continue ;
+        
+        //lines.resize(4);
+        
+        // Create the Mat of edge endpoints
+        Mat target = edgy::edgeToPointsMat(lines[0]);
+        for (int i = 1; i < 4; i++) {
+            Mat edgePts = edgy::edgeToPointsMat(lines[i]);
+            hconcat(target, edgePts, target);
+        }
+        vector<Point2f> imgPoints = matToPoints(target);
+        
+        // Initially choose the basis to be the first edge detected
+        vector<int> imgBasis = {0,1};
+        
+        
+
+        // * * * * * * * * * * * * * *
+        //      RECOGNITION
+        // * * * * * * * * * * * * * *
+        
+        auto startRecog = chrono::system_clock::now(); // Start recognition timer
+
+        vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
+
+        // Use least squares to match the tables with the most votes
+        int maxVotes = votedTables[0].votes;
+        cout << "MAX VOTES = " << maxVotes << endl << endl;
+        
+        vector<estimate> estList;
+        
+        for (int i = 0; i < votedTables.size(); i++) {
+            HashTable t = votedTables[i];
+            if (t.votes < MIN(200, maxVotes)) break;
+            
+            vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
+            
+            Mat newModel = orderedPoints[0];
+            Mat newTarget = orderedPoints[1];
+            
+            float xAngle = dA * (0.5 + t.viewAngle[0]);
+            float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
+            Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
+            estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
+            
+            if (est.iterations != lsq::MAX_ITERATIONS) {
+                //TRACE
+                cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+                
+                est.print();
+                estList.push_back(est);
+            }
+        }
+        
+        auto endRecog = chrono::system_clock::now();
+        
+        //TRACE:
+        chrono::duration<double> timeRecog = endRecog-startRecog;
+        cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
+        cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
+        
+        // Press 'w' to escape
+        if(waitKey(0) == 'w') {cout << "***\n"; break;}
+        
     }
     
-    auto endRecog = chrono::system_clock::now();
     
     chrono::duration<double> timeHash = endHash-startHash;
     cout << "Hashing time     = " << timeHash.count()*1000.0 << " ms" << endl;
-    chrono::duration<double> timeRecog = endRecog-startRecog;
-    cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
-    
-    cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
 
     return 0;
 }
+
+
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+//      Additional Functions
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 Point2f basisCoords(vector<Point2f> basis, Point2f p) {
     // Converts the coordinates of point p into the reference frame with the given basis
