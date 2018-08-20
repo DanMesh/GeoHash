@@ -62,7 +62,7 @@ int main(int argc, const char * argv[]) {
     
     vector<HashTable> tables;
     
-    Model * mod = new Box(60, 80, 30);
+    Model * model = new Box(60, 80, 30);
     //Model * model = new Rectangle(60, 80);
     Mat modelMat = model->pointsToMat();
     vector<Point3f> modelPoints = model->getVertices();
