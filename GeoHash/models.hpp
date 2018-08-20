@@ -15,23 +15,79 @@
 using namespace std;
 using namespace cv;
 
-class Box {
+
+// * * * * * * * * * * * * * * *
+//      Model
+// * * * * * * * * * * * * * * *
+
+class Model {
+public:
+    bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
+    virtual vector<bool> visibilityMask(float xAngle, float yAngle) = 0;
+    vector<Point3f> getVertices() {return vertices;};
+    vector<vector<int>> getEdgeBasisList() {return edgeBasisList;}
+    virtual Mat pointsToMat() = 0;
+protected:
+    vector<Point3f> vertices;
+    vector<vector<int>> edgeBasisList;
+};
+
+
+// * * * * * * * * * * * * * * *
+//      Box
+// * * * * * * * * * * * * * * *
+
+class Box : public Model {
 public:
     Box(float width, float height, float depth) {
         createPoints(width, height, depth);
+        edgeBasisList = {
+            {0,1}, {1,2}, {2,3}, {3,0},
+            {1,0}, {2,1}, {3,2}, {0,3},
+            
+            {4,5}, {5,6}, {6,7}, {7,4},
+            {5,4}, {6,5}, {7,6}, {4,7},
+            
+            {0,4}, {1,5}, {2,6}, {3,7},
+            {4,0}, {5,1}, {6,2}, {7,3}
+        };
     }
-    static bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
-    static vector<bool> visibilityMask(float xAngle, float yAngle);
-    vector<Point3f> vertices;
+    bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
+    vector<bool> visibilityMask(float xAngle, float yAngle);
     Mat pointsToMat();
-    
-    static const vector<vector<int>> edgeBasisList;
     
 private:
     static const vector<vector<float>> xAngleLimits;
     static const vector<vector<float>> yAngleLimits;
     void createPoints(float width, float height, float depth);
+};
+
+
+// * * * * * * * * * * * * * * *
+//      Rectangle
+// * * * * * * * * * * * * * * *
+
+class Rectangle : public Model {
+public:
+    Rectangle(float width, float height) {
+        createPoints(width, height);
+        edgeBasisList = {
+            {0,1}, {1,2}, {2,3}, {3,0},
+            {1,0}, {2,1}, {3,2}, {0,3},
+            
+            {4,5}, {5,6}, {6,7}, {7,4},
+            {5,4}, {6,5}, {7,6}, {4,7},
+            
+            {0,4}, {1,5}, {2,6}, {3,7},
+            {4,0}, {5,1}, {6,2}, {7,3}
+        };
+    }
+    bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
+    vector<bool> visibilityMask(float xAngle, float yAngle);
+    Mat pointsToMat();
     
+private:
+    void createPoints(float width, float height);
 };
 
 
