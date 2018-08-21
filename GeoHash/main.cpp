@@ -44,17 +44,9 @@ static float intrinsicMatrix[3][3] = {
 };
 static Mat K = Mat(3,3, CV_32FC1, intrinsicMatrix);
 
-// The points of the model
-static float rectModel[4][4] = {
-    { 0,  60,  60,   0},
-    { 0,   0,  80,  80},
-    { 0,   0,   0,   0},
-    { 1,   1,   1,   1}
-};
-static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
 static float binWidth = 2;
-static int numBinsX = 4;
+static int numBinsX = 12;
 static float defaultZ = 500;
 
 
@@ -72,13 +64,14 @@ int main(int argc, const char * argv[]) {
     // Segmentation by colour
     // Using HSV (Hue, Saturation, Brightness)
     // From https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/
-    Mat3b bgr (Vec3b(25, 95, 215));
+    //Mat3b bgr (Vec3b(25, 95, 215)); // Orange for rectangle
+    Mat3b bgr (Vec3b(55, 105, 20));
     
     Mat3b hsv;
     cvtColor(bgr, hsv, COLOR_BGR2HSV);
     Vec3b hsvPixel(hsv.at<Vec3b>(0,0));
     
-    int thr[3] = {20, 50, 50};
+    int thr[3] = {20, 255, 255};
     Scalar minHSV = Scalar(hsvPixel.val[0] - thr[0], hsvPixel.val[1] - thr[1], hsvPixel.val[2] - thr[2]);
     Scalar maxHSV = Scalar(hsvPixel.val[0] + thr[0], hsvPixel.val[1] + thr[1], hsvPixel.val[2] + thr[2]);
     
@@ -90,8 +83,8 @@ int main(int argc, const char * argv[]) {
     
     vector<HashTable> tables;
     
-    //Model * model = new Box(60, 80, 30);
-    Model * model = new Rectangle(60, 80);
+    Model * model = new Box(175, 210, 44);
+    //Model * model = new Rectangle(60, 80);
     Mat modelMat = model->pointsToMat();
     vector<Point3f> modelPoints = model->getVertices();
     
@@ -180,7 +173,7 @@ int main(int argc, const char * argv[]) {
         
         // Create the Mat of edge endpoints
         Mat target = edgy::edgeToPointsMat(lines[0]);
-        for (int i = 1; i < 4; i++) {
+        for (int i = 1; i < lines.size(); i++) {
             Mat edgePts = edgy::edgeToPointsMat(lines[i]);
             hconcat(target, edgePts, target);
         }
@@ -214,6 +207,12 @@ int main(int argc, const char * argv[]) {
             Mat newModel = orderedPoints[0];
             Mat newTarget = orderedPoints[1];
             
+            // Take at most 4 correspondences
+            if (newModel.cols > 4) {
+                newModel = newModel.colRange(0, 4);
+                newTarget = newTarget.rowRange(0, 4);
+            }
+            
             float xAngle = dA * (0.5 + t.viewAngle[0]);
             float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
             Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
@@ -242,6 +241,16 @@ int main(int argc, const char * argv[]) {
             line(imgResult, Point(projPts[1]), Point(projPts[2]), Scalar(255,255,255));
             line(imgResult, Point(projPts[2]), Point(projPts[3]), Scalar(255,255,255));
             line(imgResult, Point(projPts[3]), Point(projPts[0]), Scalar(255,255,255));
+            
+            line(imgResult, Point(projPts[4]), Point(projPts[5]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[5]), Point(projPts[6]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[6]), Point(projPts[7]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[7]), Point(projPts[4]), Scalar(255,255,255));
+            
+            line(imgResult, Point(projPts[0]), Point(projPts[4]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[1]), Point(projPts[5]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[2]), Point(projPts[6]), Scalar(255,255,255));
+            line(imgResult, Point(projPts[3]), Point(projPts[7]), Scalar(255,255,255));
         }
         
         // TRACE: Display the images

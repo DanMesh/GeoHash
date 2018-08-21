@@ -21,7 +21,7 @@ estimate lsq::poseEstimateLM(Vec6f pose1, Mat model, Mat target, Mat K) {
     float dL = 0.7;
     
     int iterations = 1;
-    while (E > 1 && iterations < MAX_ITERATIONS) {
+    while (E > ERROR_THRESHOLD && iterations < MAX_ITERATIONS) {
         Mat J = lsq::jacobian(pose1, model, K);
         Mat eps;
         subtract(lsq::projection(pose1, model, K).rowRange(0, 2).t(), target, eps);
