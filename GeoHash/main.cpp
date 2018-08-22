@@ -6,10 +6,12 @@
 //  Copyright © 2018 Daniel Mesham. All rights reserved.
 //
 
+#include "edgy.hpp"
 #include "geo_hash.h"
 #include "hashing.hpp"
 #include "lsq.hpp"
 #include "models.hpp"
+#include "orange.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <iostream>
@@ -97,29 +99,44 @@ int main(int argc, const char * argv[]) {
     auto endHash = chrono::system_clock::now();
      
     // * * * * * * * * * * * * * * * * *
-    //   Create a set of image points
+    //   Create a fake image
     // * * * * * * * * * * * * * * * * *
     
-    float rX = 0.6 * CV_PI;
-    float rY = -CV_PI/4;
+    Vec6f pose = {70, 12, 650, CV_PI/5, CV_PI/6, 0};
     
-    Vec6f pose = {70, 12, 650, rX, rY, 0};
-    Mat img = lsq::projection(pose, modelMat, K);
-    vector<Point2f> imgPointsAll = matToPoints(img);
-    vector<Point2f> imgPoints;
-    vector<bool> visMask = model->visibilityMask(rX, rY);
+    // Draw an actual fake image
+    Mat img = Mat(720, 1280, CV_8UC3);
+    model->draw(img, pose, K);
+    imshow("Fake image", img); waitKey(0);
     
-    for (int i = 0; i < imgPointsAll.size(); i++) {
-        if (visMask[i]) imgPoints.push_back(imgPointsAll[i]);
+    // Get the detected lines
+    vector<Vec4i> lines = orange::borderLines(img);
+    
+    // Try again if <2 lines found
+    if (lines.size() < 2) return 1;
+    
+    // TRACE: Display the lines on the images
+    for(int i = 0; i < lines.size(); i++) {
+        Vec4i l = lines[i];
+        Point p1 = Point(l[0], l[1]);
+        Point p2 = Point(l[2], l[3]);
+        
+        Scalar colour = Scalar(0,255,0);
+        if (i == 0) colour = Scalar(50,150,255);
+        if (i >= 4) colour = Scalar(0,0,255);
+        
+        line(img, p1, p2, colour, 1);
     }
     
-    Point2f noisePoint = Point2f(550,550);
-    //imgPoints.push_back(noisePoint);
+    imshow("Fake image", img); waitKey(0);
     
-    cout << "MODEL = " << endl << modelPoints << endl << endl << "IMAGE = " << endl << imgPoints << endl << endl;
-    
-    //debugShowBoxPoints(imgPoints, mod->getEdgeBasisList(), visMask);
-    //waitKey(0);
+    // Create the Mat of edge endpoints
+    Mat target = edgy::edgeToPointsMat(lines[0]);
+    for (int i = 1; i < lines.size(); i++) {
+        Mat edgePts = edgy::edgeToPointsMat(lines[i]);
+        hconcat(target, edgePts, target);
+    }
+    vector<Point2f> imgPoints = matToPoints(target);
     
     // * * * * * * * * * * * * * *
     //      RECOGNITION

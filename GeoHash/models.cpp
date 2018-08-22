@@ -6,6 +6,7 @@
 //  Copyright © 2018 Daniel Mesham. All rights reserved.
 //
 
+#include "lsq.hpp"
 #include "models.hpp"
 
 
@@ -77,6 +78,31 @@ Mat Box::pointsToMat() {
         ret.at<float>(3, i) = 1;
     }
     return ret * 1;
+}
+
+void Box::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
+    Mat proj = lsq::projection(pose, pointsToMat(), K);
+    
+    // Create a list of points
+    vector<Point> points;
+    for (int i  = 0; i < proj.cols; i++) {
+        Mat col = proj.col(i);
+        points.push_back(Point(col.at<float>(0), col.at<float>(1)));
+    }
+    
+    // Draw the points according to the edge list
+    for (int i = 0; i < edgeBasisList.size(); i++) {
+        vector<int> edge = edgeBasisList[i];
+        
+        if (edge[0] < edge[1]) continue; // Avoid duplicates
+        
+        if (!vertexIsVisible(edge[0], pose[3], pose[4])) continue; // Don't show invisible vertices
+        if (!vertexIsVisible(edge[1], pose[3], pose[4])) continue;
+        
+        Point p1 = points[ edge[0] ];
+        Point p2 = points[ edge[1] ];
+        line(img, p1, p2, colour);
+    }
 }
 
 
