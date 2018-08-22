@@ -58,11 +58,11 @@ vector<Vec4i> orange::borderLines(Mat img) {
     // Returns the lines corresponding to the edges of the rectangle from an image.
     
     // Resolutions of the rho and theta parameters of the lines
-    double res_rho = 2;
+    double res_rho = 5;
     double res_theta = CV_PI/180;
     int threshold = 60;
-    double minLineLength = 50;
-    double maxLineGap = 50;
+    double minLineLength = 100;
+    double maxLineGap = 20;
     
     // Edge detection
     Mat dst;
