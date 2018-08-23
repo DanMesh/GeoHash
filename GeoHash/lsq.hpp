@@ -25,6 +25,12 @@ class estimate {
 public:
     estimate( Vec6f pose_in, float error_in, float iter_in ) : pose(standardisePose(pose_in)), error(error_in), iterations(iter_in) {}
     void print() {cout << pose << "\nIterations = " << iterations << "\nError = " << error << "\n\n";}
+    
+    bool operator < (const estimate& e) const
+    {
+        return (error < e.error);
+    }
+    
 private:
     static Vec6f standardisePose(Vec6f pose);
     

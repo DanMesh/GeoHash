@@ -185,7 +185,7 @@ int main(int argc, const char * argv[]) {
                 cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
             
                 est.print();
-                estList.push_back(est); break;
+                estList.push_back(est);
             }
         }
         edge++;
@@ -202,12 +202,14 @@ int main(int argc, const char * argv[]) {
     
     // TRACE
     if (estList.size() > 0) {
+        sort(estList.begin(), estList.end());
         Mat imgResult;
         img.copyTo(imgResult);
         Mat tmp = Mat(720, 1280, CV_8UC3);
         model->draw(tmp, estList[0].pose, K, Scalar(0,0,255));
         addWeighted(imgResult, 0.4, tmp, 0.6, 0, imgResult);
         imshow("imgResult", imgResult);
+        cout << "\nSmallest error = \n"; estList[0].print();
     }
 
     waitKey(0);

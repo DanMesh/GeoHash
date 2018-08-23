@@ -33,12 +33,16 @@ const vector<vector<int>> Box::faces = {
 };
 
 bool Box::vertexIsVisible(int vertexID, float xAngle, float yAngle) {
-    while (xAngle < 0)          xAngle += 2*CV_PI;
-    while (xAngle >= 2*CV_PI)   xAngle -= 2*CV_PI;
-    
     while (yAngle < 0)          yAngle += 2*CV_PI;
     while (yAngle >= 2*CV_PI)   yAngle -= 2*CV_PI;
-    if (yAngle > 0.5*CV_PI && yAngle < 1.5*CV_PI) throw invalid_argument("Bad yAngle for visibility check. yAngle must be between ±PI/2 (or within a 2*PI difference)");
+    if (yAngle > 0.5*CV_PI && yAngle < 1.5*CV_PI) {
+        yAngle = CV_PI - yAngle;            // Bring into band around 0 radians
+        if (yAngle < 0) yAngle += 2*CV_PI;  // Make angle positive again
+        xAngle += CV_PI;                    // Add PI to the xAngle
+    }
+    
+    while (xAngle < 0)          xAngle += 2*CV_PI;
+    while (xAngle >= 2*CV_PI)   xAngle -= 2*CV_PI;
     
     vector<float> xLim = xAngleLimits[vertexID];
     vector<float> yLim = yAngleLimits[vertexID];
