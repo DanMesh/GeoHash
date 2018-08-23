@@ -180,7 +180,7 @@ int main(int argc, const char * argv[]) {
             Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
             estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
             
-            if (est.iterations != lsq::MAX_ITERATIONS) {
+            if (est.iterations != lsq::MAX_ITERATIONS && est.pose[2] > 0) {
                 //TRACE
                 cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
             
