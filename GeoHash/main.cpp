@@ -53,8 +53,8 @@ static float rectModel[4][4] = {
 };
 static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
-static float binWidth = 1.75;
-static int numBinsX = 12;
+static float binWidth = 2;
+static int numBinsX = 8;
 static float defaultZ = 500;
 
 
@@ -102,12 +102,11 @@ int main(int argc, const char * argv[]) {
     //   Create a fake image
     // * * * * * * * * * * * * * * * * *
     
-    Vec6f pose = {70, 12, 650, CV_PI/5, CV_PI/6, 0};
+    Vec6f pose = {70, 12, 350, CV_PI/5, CV_PI/5.5, 0};
     
     // Draw an actual fake image
     Mat img = Mat(720, 1280, CV_8UC3);
     model->draw(img, pose, K);
-    imshow("Fake image", img); waitKey(0);
     
     // Get the detected lines
     vector<Vec4i> lines = orange::borderLines(img);
@@ -122,13 +121,13 @@ int main(int argc, const char * argv[]) {
         Point p2 = Point(l[2], l[3]);
         
         Scalar colour = Scalar(0,255,0);
-        if (i == 0) colour = Scalar(50,150,255);
+        if (i == 0) colour = Scalar(255,0,0);
         if (i >= 4) colour = Scalar(0,0,255);
         
         line(img, p1, p2, colour, 1);
     }
     
-    imshow("Fake image", img); waitKey(0);
+    imshow("Fake image", img);
     
     // Create the Mat of edge endpoints
     Mat target = edgy::edgeToPointsMat(lines[0]);
@@ -144,37 +143,52 @@ int main(int argc, const char * argv[]) {
     
     auto startRecog = chrono::system_clock::now(); // Start recognition timer
     
-    vector<int> imgBasis = {0,1};    // The "random" basis
-
-    vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
-
-    // Use least squares to match the tables with the most votes
-    int maxVotes = votedTables[0].votes;
-    cout << "MAX VOTES = " << maxVotes << endl << endl;
+    vector<estimate> estList;       // List if pose estimates
+    int edge = 0;                   // The detected edge to use as a basis
     
-    vector<estimate> estList;
-    
-    for (int i = 0; i < votedTables.size(); i++) {
-        HashTable t = votedTables[i];
-        if (t.votes < MIN(200, maxVotes)) break;
+    while (edge < lines.size() && estList.size() < 1) {
+        //TRACE:
+        cout << endl << "TRYING EDGE #" << edge << endl;
         
-        vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
+        vector<int> imgBasis = {2*edge, 2*edge +1};
+
+        vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
+
+        // Use least squares to match the tables with the most votes
+        int maxVotes = votedTables[0].votes;
+        cout << "MAX VOTES = " << maxVotes << endl << endl;
         
-        Mat newModel = orderedPoints[0];
-        Mat newTarget = orderedPoints[1];
         
-        float xAngle = dA * (0.5 + t.viewAngle[0]);
-        float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
-        Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
-        estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
         
-        if (est.iterations != lsq::MAX_ITERATIONS) {
-            //TRACE
-            cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+        for (int i = 0; i < votedTables.size(); i++) {
+            HashTable t = votedTables[i];
+            if (t.votes < MIN(200, maxVotes)) break;
             
-            est.print();
-            estList.push_back(est);
+            vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
+            
+            Mat newModel = orderedPoints[0];
+            Mat newTarget = orderedPoints[1];
+            
+            // Take only 4 correspondences
+            if (newModel.cols > 4) {
+                newModel = newModel.colRange(0, 4);
+                newTarget = newTarget.rowRange(0, 4);
+            }
+            
+            float xAngle = dA * (0.5 + t.viewAngle[0]);
+            float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
+            Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
+            estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
+            
+            if (est.iterations != lsq::MAX_ITERATIONS) {
+                //TRACE
+                cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+            
+                est.print();
+                estList.push_back(est); break;
+            }
         }
+        edge++;
     }
     
     auto endRecog = chrono::system_clock::now();
@@ -184,8 +198,20 @@ int main(int argc, const char * argv[]) {
     chrono::duration<double> timeRecog = endRecog-startRecog;
     cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
     
-    cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
+    cout << endl << estList.size() << " successes!" << endl;
+    
+    // TRACE
+    if (estList.size() > 0) {
+        Mat imgResult;
+        img.copyTo(imgResult);
+        Mat tmp = Mat(720, 1280, CV_8UC3);
+        model->draw(tmp, estList[0].pose, K, Scalar(0,0,255));
+        addWeighted(imgResult, 0.4, tmp, 0.6, 0, imgResult);
+        imshow("imgResult", imgResult);
+    }
 
+    waitKey(0);
+    
     return 0;
 }
 

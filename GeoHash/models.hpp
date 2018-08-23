@@ -61,6 +61,7 @@ public:
 private:
     static const vector<vector<float>> xAngleLimits;
     static const vector<vector<float>> yAngleLimits;
+    static const vector<vector<int>> faces;
     void createPoints(float width, float height, float depth);
 };
 

@@ -27,6 +27,11 @@ const vector<vector<float>> Box::yAngleLimits = {
     {1.5*CV_PI, 2.0*CV_PI}, {0.0*CV_PI, 0.5*CV_PI}
 };
 
+const vector<vector<int>> Box::faces = {
+    {0,1,2,3}, {0,1,5,4}, {0,3,7,4},
+    {4,5,6,7}, {1,2,6,5}, {2,3,7,6}
+};
+
 bool Box::vertexIsVisible(int vertexID, float xAngle, float yAngle) {
     while (xAngle < 0)          xAngle += 2*CV_PI;
     while (xAngle >= 2*CV_PI)   xAngle -= 2*CV_PI;
@@ -91,17 +96,24 @@ void Box::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
     }
     
     // Draw the points according to the edge list
-    for (int i = 0; i < edgeBasisList.size(); i++) {
-        vector<int> edge = edgeBasisList[i];
+    for (int i = 0; i < faces.size(); i++) {
+        vector<int> face = faces[i];
         
-        if (edge[0] < edge[1]) continue; // Avoid duplicates
+        if (!vertexIsVisible(face[0], pose[3], pose[4])) continue; // Don't show invisible vertices
+        if (!vertexIsVisible(face[1], pose[3], pose[4])) continue;
+        if (!vertexIsVisible(face[2], pose[3], pose[4])) continue;
+        if (!vertexIsVisible(face[3], pose[3], pose[4])) continue;
         
-        if (!vertexIsVisible(edge[0], pose[3], pose[4])) continue; // Don't show invisible vertices
-        if (!vertexIsVisible(edge[1], pose[3], pose[4])) continue;
-        
-        Point p1 = points[ edge[0] ];
-        Point p2 = points[ edge[1] ];
-        line(img, p1, p2, colour);
+        Point p1 = points[ face[0] ];
+        Point p2 = points[ face[1] ];
+        Point p3 = points[ face[2] ];
+        Point p4 = points[ face[3] ];
+        Point pts[1][4] = {
+            {points[ face[0] ], points[ face[1] ], points[ face[2] ], points[ face[3] ]}
+        };
+        const Point* ppt[1] = {pts[0]};
+        int npt[] = {4};
+        fillPoly(img, ppt, npt, 1, colour*(1 - i*0.1));
     }
 }
 
