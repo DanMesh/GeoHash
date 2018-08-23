@@ -54,7 +54,7 @@ static float rectModel[4][4] = {
 static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
 static float binWidth = 2;
-static int numBinsX = 8;
+static int numBinsX = 10;
 static float defaultZ = 500;
 
 
@@ -102,7 +102,7 @@ int main(int argc, const char * argv[]) {
     //   Create a fake image
     // * * * * * * * * * * * * * * * * *
     
-    Vec6f pose = {70, 12, 350, CV_PI/5, CV_PI/5.5, 0};
+    Vec6f pose = {70, 12, 350, CV_PI/4, CV_PI/5, CV_PI/6};
     
     // Draw an actual fake image
     Mat img = Mat(720, 1280, CV_8UC3);
@@ -142,6 +142,7 @@ int main(int argc, const char * argv[]) {
     // * * * * * * * * * * * * * *
     
     auto startRecog = chrono::system_clock::now(); // Start recognition timer
+    auto endRecog1 = startRecog;                    // Placeholder for the first end time
     
     vector<estimate> estList;       // List if pose estimates
     int edge = 0;                   // The detected edge to use as a basis
@@ -186,6 +187,7 @@ int main(int argc, const char * argv[]) {
             
                 est.print();
                 estList.push_back(est);
+                if (estList.size() == 1) endRecog1 = chrono::system_clock::now();
             }
         }
         edge++;
@@ -197,6 +199,8 @@ int main(int argc, const char * argv[]) {
     cout << "Hashing time     = " << timeHash.count()*1000.0 << " ms" << endl;
     chrono::duration<double> timeRecog = endRecog-startRecog;
     cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
+    chrono::duration<double> timeRecog1 = endRecog1-startRecog;
+    cout << "First match time = " << timeRecog1.count()*1000.0 << " ms" << endl;
     
     cout << endl << estList.size() << " successes!" << endl;
     
