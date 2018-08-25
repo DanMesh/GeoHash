@@ -6,6 +6,7 @@
 //  Copyright © 2018 Daniel Mesham. All rights reserved.
 //
 
+#include "lsq.hpp"
 #include "models.hpp"
 
 
@@ -26,13 +27,22 @@ const vector<vector<float>> Box::yAngleLimits = {
     {1.5*CV_PI, 2.0*CV_PI}, {0.0*CV_PI, 0.5*CV_PI}
 };
 
+const vector<vector<int>> Box::faces = {
+    {0,1,2,3}, {0,1,5,4}, {0,3,7,4},
+    {4,5,6,7}, {1,2,6,5}, {2,3,7,6}
+};
+
 bool Box::vertexIsVisible(int vertexID, float xAngle, float yAngle) {
-    while (xAngle < 0)          xAngle += 2*CV_PI;
-    while (xAngle >= 2*CV_PI)   xAngle -= 2*CV_PI;
-    
     while (yAngle < 0)          yAngle += 2*CV_PI;
     while (yAngle >= 2*CV_PI)   yAngle -= 2*CV_PI;
-    if (yAngle > 0.5*CV_PI && yAngle < 1.5*CV_PI) throw invalid_argument("Bad yAngle for visibility check. yAngle must be between ±PI/2 (or within a 2*PI difference)");
+    if (yAngle > 0.5*CV_PI && yAngle < 1.5*CV_PI) {
+        yAngle = CV_PI - yAngle;            // Bring into band around 0 radians
+        if (yAngle < 0) yAngle += 2*CV_PI;  // Make angle positive again
+        xAngle += CV_PI;                    // Add PI to the xAngle
+    }
+    
+    while (xAngle < 0)          xAngle += 2*CV_PI;
+    while (xAngle >= 2*CV_PI)   xAngle -= 2*CV_PI;
     
     vector<float> xLim = xAngleLimits[vertexID];
     vector<float> yLim = yAngleLimits[vertexID];
@@ -77,6 +87,38 @@ Mat Box::pointsToMat() {
         ret.at<float>(3, i) = 1;
     }
     return ret * 1;
+}
+
+void Box::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
+    Mat proj = lsq::projection(pose, pointsToMat(), K);
+    
+    // Create a list of points
+    vector<Point> points;
+    for (int i  = 0; i < proj.cols; i++) {
+        Mat col = proj.col(i);
+        points.push_back(Point(col.at<float>(0), col.at<float>(1)));
+    }
+    
+    // Draw the points according to the edge list
+    for (int i = 0; i < faces.size(); i++) {
+        vector<int> face = faces[i];
+        
+        if (!vertexIsVisible(face[0], pose[3], pose[4])) continue; // Don't show invisible vertices
+        if (!vertexIsVisible(face[1], pose[3], pose[4])) continue;
+        if (!vertexIsVisible(face[2], pose[3], pose[4])) continue;
+        if (!vertexIsVisible(face[3], pose[3], pose[4])) continue;
+        
+        Point p1 = points[ face[0] ];
+        Point p2 = points[ face[1] ];
+        Point p3 = points[ face[2] ];
+        Point p4 = points[ face[3] ];
+        Point pts[1][4] = {
+            {points[ face[0] ], points[ face[1] ], points[ face[2] ], points[ face[3] ]}
+        };
+        const Point* ppt[1] = {pts[0]};
+        int npt[] = {4};
+        fillPoly(img, ppt, npt, 1, colour*(1 - i*0.1));
+    }
 }
 
 

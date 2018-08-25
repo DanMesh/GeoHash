@@ -6,10 +6,12 @@
 //  Copyright © 2018 Daniel Mesham. All rights reserved.
 //
 
+#include "edgy.hpp"
 #include "geo_hash.h"
 #include "hashing.hpp"
 #include "lsq.hpp"
 #include "models.hpp"
+#include "orange.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <iostream>
@@ -51,8 +53,8 @@ static float rectModel[4][4] = {
 };
 static Mat x = Mat(4,4, CV_32FC1, rectModel);
 
-static float binWidth = 1.75;
-static int numBinsX = 12;
+static float binWidth = 2;
+static int numBinsX = 10;
 static float defaultZ = 500;
 
 
@@ -97,67 +99,98 @@ int main(int argc, const char * argv[]) {
     auto endHash = chrono::system_clock::now();
      
     // * * * * * * * * * * * * * * * * *
-    //   Create a set of image points
+    //   Create a fake image
     // * * * * * * * * * * * * * * * * *
     
-    float rX = 0.6 * CV_PI;
-    float rY = -CV_PI/4;
+    Vec6f pose = {70, 12, 350, CV_PI/4, CV_PI/5, CV_PI/6};
     
-    Vec6f pose = {70, 12, 650, rX, rY, 0};
-    Mat img = lsq::projection(pose, modelMat, K);
-    vector<Point2f> imgPointsAll = matToPoints(img);
-    vector<Point2f> imgPoints;
-    vector<bool> visMask = model->visibilityMask(rX, rY);
+    // Draw an actual fake image
+    Mat img = Mat(720, 1280, CV_8UC3);
+    model->draw(img, pose, K);
     
-    for (int i = 0; i < imgPointsAll.size(); i++) {
-        if (visMask[i]) imgPoints.push_back(imgPointsAll[i]);
+    // Get the detected lines
+    vector<Vec4i> lines = orange::borderLines(img);
+    
+    // Try again if <2 lines found
+    if (lines.size() < 2) return 1;
+    
+    // TRACE: Display the lines on the images
+    for(int i = 0; i < lines.size(); i++) {
+        Vec4i l = lines[i];
+        Point p1 = Point(l[0], l[1]);
+        Point p2 = Point(l[2], l[3]);
+        
+        Scalar colour = Scalar(0,255,0);
+        if (i == 0) colour = Scalar(255,0,0);
+        if (i >= 4) colour = Scalar(0,0,255);
+        
+        line(img, p1, p2, colour, 1);
     }
     
-    Point2f noisePoint = Point2f(550,550);
-    //imgPoints.push_back(noisePoint);
+    imshow("Fake image", img);
     
-    cout << "MODEL = " << endl << modelPoints << endl << endl << "IMAGE = " << endl << imgPoints << endl << endl;
-    
-    //debugShowBoxPoints(imgPoints, mod->getEdgeBasisList(), visMask);
-    //waitKey(0);
+    // Create the Mat of edge endpoints
+    Mat target = edgy::edgeToPointsMat(lines[0]);
+    for (int i = 1; i < lines.size(); i++) {
+        Mat edgePts = edgy::edgeToPointsMat(lines[i]);
+        hconcat(target, edgePts, target);
+    }
+    vector<Point2f> imgPoints = matToPoints(target);
     
     // * * * * * * * * * * * * * *
     //      RECOGNITION
     // * * * * * * * * * * * * * *
     
     auto startRecog = chrono::system_clock::now(); // Start recognition timer
+    auto endRecog1 = startRecog;                    // Placeholder for the first end time
     
-    vector<int> imgBasis = {0,1};    // The "random" basis
+    vector<estimate> estList;       // List if pose estimates
+    int edge = 0;                   // The detected edge to use as a basis
+    
+    while (edge < lines.size() && estList.size() < 1) {
+        //TRACE:
+        cout << endl << "TRYING EDGE #" << edge << endl;
+        
+        vector<int> imgBasis = {2*edge, 2*edge +1};
 
-    vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
+        vector<HashTable> votedTables = hashing::voteForTables(tables, imgPoints, imgBasis);
 
-    // Use least squares to match the tables with the most votes
-    int maxVotes = votedTables[0].votes;
-    cout << "MAX VOTES = " << maxVotes << endl << endl;
-    
-    vector<estimate> estList;
-    
-    for (int i = 0; i < votedTables.size(); i++) {
-        HashTable t = votedTables[i];
-        if (t.votes < MIN(200, maxVotes)) break;
+        // Use least squares to match the tables with the most votes
+        int maxVotes = votedTables[0].votes;
+        cout << "MAX VOTES = " << maxVotes << endl << endl;
         
-        vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
         
-        Mat newModel = orderedPoints[0];
-        Mat newTarget = orderedPoints[1];
         
-        float xAngle = dA * (0.5 + t.viewAngle[0]);
-        float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
-        Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
-        estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
-        
-        if (est.iterations != lsq::MAX_ITERATIONS) {
-            //TRACE
-            cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+        for (int i = 0; i < votedTables.size(); i++) {
+            HashTable t = votedTables[i];
+            if (t.votes < MIN(200, maxVotes)) break;
             
-            est.print();
-            estList.push_back(est);
+            vector<Mat> orderedPoints = hashing::getOrderedPoints(imgBasis, t, modelPoints, imgPoints);
+            
+            Mat newModel = orderedPoints[0];
+            Mat newTarget = orderedPoints[1];
+            
+            // Take only 4 correspondences
+            if (newModel.cols > 4) {
+                newModel = newModel.colRange(0, 4);
+                newTarget = newTarget.rowRange(0, 4);
+            }
+            
+            float xAngle = dA * (0.5 + t.viewAngle[0]);
+            float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
+            Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
+            estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
+            
+            if (est.iterations != lsq::MAX_ITERATIONS && est.pose[2] > 0) {
+                //TRACE
+                cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
+            
+                est.print();
+                estList.push_back(est);
+                if (estList.size() == 1) endRecog1 = chrono::system_clock::now();
+            }
         }
+        edge++;
     }
     
     auto endRecog = chrono::system_clock::now();
@@ -166,9 +199,25 @@ int main(int argc, const char * argv[]) {
     cout << "Hashing time     = " << timeHash.count()*1000.0 << " ms" << endl;
     chrono::duration<double> timeRecog = endRecog-startRecog;
     cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
+    chrono::duration<double> timeRecog1 = endRecog1-startRecog;
+    cout << "First match time = " << timeRecog1.count()*1000.0 << " ms" << endl;
     
-    cout << endl << estList.size() << "/" << votedTables.size() << " successes!" << endl;
+    cout << endl << estList.size() << " successes!" << endl;
+    
+    // TRACE
+    if (estList.size() > 0) {
+        sort(estList.begin(), estList.end());
+        Mat imgResult;
+        img.copyTo(imgResult);
+        Mat tmp = Mat(720, 1280, CV_8UC3);
+        model->draw(tmp, estList[0].pose, K, Scalar(0,0,255));
+        addWeighted(imgResult, 0.4, tmp, 0.6, 0, imgResult);
+        imshow("imgResult", imgResult);
+        cout << "\nSmallest error = \n"; estList[0].print();
+    }
 
+    waitKey(0);
+    
     return 0;
 }
 

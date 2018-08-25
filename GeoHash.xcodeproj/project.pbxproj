@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		370DAA5F212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 370DAA5E212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib */; };
+		370DAA64212DFC850080275E /* edgy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 370DAA62212DFC840080275E /* edgy.cpp */; };
+		370DAA65212DFC850080275E /* orange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 370DAA63212DFC850080275E /* orange.cpp */; };
 		3793179B2122CD0600C1553A /* lsq.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3793179A2122CD0600C1553A /* lsq.cpp */; };
 		379AACAB2121DF6A000F65A0 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 379AACAA2121DF6A000F65A0 /* main.cpp */; };
 		379AACB42121DFA1000F65A0 /* libopencv_core.3.4.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 379AACB12121DFA1000F65A0 /* libopencv_core.3.4.2.dylib */; };
@@ -31,6 +34,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		370DAA5E212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_videoio.3.4.2.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.4.2/lib/libopencv_videoio.3.4.2.dylib; sourceTree = "<group>"; };
+		370DAA60212DFC840080275E /* orange.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = orange.hpp; sourceTree = "<group>"; };
+		370DAA61212DFC840080275E /* edgy.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = edgy.hpp; sourceTree = "<group>"; };
+		370DAA62212DFC840080275E /* edgy.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = edgy.cpp; sourceTree = "<group>"; };
+		370DAA63212DFC850080275E /* orange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = orange.cpp; sourceTree = "<group>"; };
 		379317992122CD0600C1553A /* lsq.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = lsq.hpp; sourceTree = "<group>"; };
 		3793179A2122CD0600C1553A /* lsq.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lsq.cpp; sourceTree = "<group>"; };
 		379AACA72121DF6A000F65A0 /* GeoHash */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = GeoHash; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -54,6 +62,7 @@
 			files = (
 				379AACB52121DFA1000F65A0 /* libopencv_highgui.3.4.2.dylib in Frameworks */,
 				379AACB42121DFA1000F65A0 /* libopencv_core.3.4.2.dylib in Frameworks */,
+				370DAA5F212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib in Frameworks */,
 				379AACB62121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -64,6 +73,7 @@
 		379AAC9E2121DF6A000F65A0 = {
 			isa = PBXGroup;
 			children = (
+				370DAA5E212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib */,
 				379AACB12121DFA1000F65A0 /* libopencv_core.3.4.2.dylib */,
 				379AACB22121DFA1000F65A0 /* libopencv_highgui.3.4.2.dylib */,
 				379AACB32121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib */,
@@ -83,6 +93,10 @@
 		379AACA92121DF6A000F65A0 /* GeoHash */ = {
 			isa = PBXGroup;
 			children = (
+				370DAA62212DFC840080275E /* edgy.cpp */,
+				370DAA61212DFC840080275E /* edgy.hpp */,
+				370DAA63212DFC850080275E /* orange.cpp */,
+				370DAA60212DFC840080275E /* orange.hpp */,
 				379AACBB2121E375000F65A0 /* geo_hash.cpp */,
 				379AACB92121E375000F65A0 /* geo_hash.h */,
 				379AACBA2121E375000F65A0 /* geo-hash-example.cpp */,
@@ -157,8 +171,10 @@
 				37F5B3F02125777500B11C5B /* models.cpp in Sources */,
 				3793179B2122CD0600C1553A /* lsq.cpp in Sources */,
 				379AACBC2121E375000F65A0 /* geo-hash-example.cpp in Sources */,
+				370DAA64212DFC850080275E /* edgy.cpp in Sources */,
 				379AACAB2121DF6A000F65A0 /* main.cpp in Sources */,
 				379AACBD2121E375000F65A0 /* geo_hash.cpp in Sources */,
+				370DAA65212DFC850080275E /* orange.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
