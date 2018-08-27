@@ -88,6 +88,7 @@ public:
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
     vector<bool> visibilityMask(float xAngle, float yAngle);
     Mat pointsToMat();
+    void draw(Mat img, Vec6f pose, Mat K, Scalar colour);
     
 private:
     void createPoints(float width, float height);

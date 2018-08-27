@@ -108,10 +108,6 @@ void Box::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
         if (!vertexIsVisible(face[2], pose[3], pose[4])) continue;
         if (!vertexIsVisible(face[3], pose[3], pose[4])) continue;
         
-        Point p1 = points[ face[0] ];
-        Point p2 = points[ face[1] ];
-        Point p3 = points[ face[2] ];
-        Point p4 = points[ face[3] ];
         Point pts[1][4] = {
             {points[ face[0] ], points[ face[1] ], points[ face[2] ], points[ face[3] ]}
         };
@@ -154,4 +150,19 @@ Mat Rectangle::pointsToMat() {
         ret.at<float>(3, i) = 1;
     }
     return ret * 1;
+}
+
+void Rectangle::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
+    Mat proj = lsq::projection(pose, pointsToMat(), K);
+    
+    // Create a list of points
+    Point points[1][4];
+    for (int i  = 0; i < proj.cols; i++) {
+        Mat col = proj.col(i);
+        points[0][i] = Point(col.at<float>(0), col.at<float>(1));
+    }
+    
+    const Point* ppt[1] = {points[0]};
+    int npt[] = {4};
+    fillPoly(img, ppt, npt, 1, colour);
 }
