@@ -17,6 +17,7 @@
 		379AACB62121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 379AACB32121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib */; };
 		379AACBC2121E375000F65A0 /* geo-hash-example.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 379AACBA2121E375000F65A0 /* geo-hash-example.cpp */; };
 		379AACBD2121E375000F65A0 /* geo_hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 379AACBB2121E375000F65A0 /* geo_hash.cpp */; };
+		37E617822134575A00BAFC13 /* libopencv_imgcodecs.3.4.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E617812134575900BAFC13 /* libopencv_imgcodecs.3.4.2.dylib */; };
 		37E83A2B21243C0B00D1EC7C /* hashing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37E83A2921243C0B00D1EC7C /* hashing.cpp */; };
 		37F5B3F02125777500B11C5B /* models.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37F5B3EE2125777500B11C5B /* models.cpp */; };
 /* End PBXBuildFile section */
@@ -49,6 +50,7 @@
 		379AACB92121E375000F65A0 /* geo_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = geo_hash.h; sourceTree = "<group>"; };
 		379AACBA2121E375000F65A0 /* geo-hash-example.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "geo-hash-example.cpp"; sourceTree = "<group>"; };
 		379AACBB2121E375000F65A0 /* geo_hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geo_hash.cpp; sourceTree = "<group>"; };
+		37E617812134575900BAFC13 /* libopencv_imgcodecs.3.4.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgcodecs.3.4.2.dylib; path = ../../../../../../../usr/local/Cellar/opencv/3.4.2/lib/libopencv_imgcodecs.3.4.2.dylib; sourceTree = "<group>"; };
 		37E83A2921243C0B00D1EC7C /* hashing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = hashing.cpp; sourceTree = "<group>"; };
 		37E83A2A21243C0B00D1EC7C /* hashing.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = hashing.hpp; sourceTree = "<group>"; };
 		37F5B3EE2125777500B11C5B /* models.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = models.cpp; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 			files = (
 				379AACB52121DFA1000F65A0 /* libopencv_highgui.3.4.2.dylib in Frameworks */,
 				379AACB42121DFA1000F65A0 /* libopencv_core.3.4.2.dylib in Frameworks */,
+				37E617822134575A00BAFC13 /* libopencv_imgcodecs.3.4.2.dylib in Frameworks */,
 				370DAA5F212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib in Frameworks */,
 				379AACB62121DFA1000F65A0 /* libopencv_imgproc.3.4.2.dylib in Frameworks */,
 			);
@@ -73,6 +76,7 @@
 		379AAC9E2121DF6A000F65A0 = {
 			isa = PBXGroup;
 			children = (
+				37E617812134575900BAFC13 /* libopencv_imgcodecs.3.4.2.dylib */,
 				370DAA5E212DFA6F0080275E /* libopencv_videoio.3.4.2.dylib */,
 				379AACB12121DFA1000F65A0 /* libopencv_core.3.4.2.dylib */,
 				379AACB22121DFA1000F65A0 /* libopencv_highgui.3.4.2.dylib */,
