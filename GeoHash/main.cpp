@@ -108,7 +108,8 @@ int main(int argc, const char * argv[]) {
     Mat img;
     vector<Vec4i> lines;
     int fileNum = 1;
-    while(fileNum <= 6) {
+    
+    while(fileNum <= 9) {
         stringstream ss;
         ss << "orangeRect_" << fileNum << ".jpg";
         string s = ss.str();
@@ -181,13 +182,17 @@ int main(int argc, const char * argv[]) {
                     newModel = newModel.colRange(0, 4);
                     newTarget = newTarget.rowRange(0, 4);
                 }
+                else if (newModel.cols < 4) {
+                    //TRACE
+                    cout << "* * * Only " << newModel.cols << " correspondences!!" << endl;
+                }
                 
                 float xAngle = dA * (0.5 + t.viewAngle[0]);
                 float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
                 Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
                 estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
                 
-                if (est.iterations != lsq::MAX_ITERATIONS && est.pose[2] > 0) {
+                if (est.iterations != lsq::MAX_ITERATIONS && est.pose[2] > 0 && !isnan(est.error)) {
                     //TRACE
                     cout << "Basis = " << t.basis[0] << "," << t.basis[1] << " | Angle = " << t.viewAngle[0] << "," << t.viewAngle[1] << " | Votes = " << t.votes <<  endl;
                 
