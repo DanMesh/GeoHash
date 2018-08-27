@@ -49,6 +49,8 @@ static float binWidth = 2;
 static int numBinsX = 12;
 static float defaultZ = 500;
 
+static string dataFolder = "../../../../../data/";
+
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -127,133 +129,14 @@ int main(int argc, const char * argv[]) {
     Mat img, imgLAB, imgHSV, imgResult;
     vector<Vec4i> lines;
     while(1) {
-        cap >> img;
+        //cap >> img;
+        img = imread(dataFolder + "orangeRect_1.jpg", CV_LOAD_IMAGE_COLOR);
         
         Mat imgMask;
         imgResult = Mat();
         
-        
-        Mat kernelSharp = (Mat_<float>(3,3) <<
-                      1,  1, 1,
-                      1, -8, 1,
-                      1,  1, 1);
-        Mat imgLaplacian;
-        Mat sharp = img; // copy source image to another temporary one
-        filter2D(sharp, imgLaplacian, CV_32F, kernelSharp);
-        img.convertTo(sharp, CV_32F);
-        Mat imgSharp = sharp - imgLaplacian;
-        // convert back to 8bits gray scale
-        imgSharp.convertTo(imgSharp, CV_8UC3);
-        imgLaplacian.convertTo(imgLaplacian, CV_8UC3);
-        //imshow( "Laplace Filtered Image", imgLaplacian );
-        //imshow( "New Sharped Image", imgSharp );
-        
-        
-        
-        
-        // Segmentation using the HSV color
-        cvtColor(img, imgHSV, COLOR_BGR2HSV);
-        inRange(imgHSV, minHSV, maxHSV, imgMask);
-        bitwise_and(img, img, imgResult, imgMask);
-        
-        Mat planes[3], masks[3];
-        split(imgHSV, planes);
-        inRange(planes[0], minHSV[0], maxHSV[0], masks[0]);
-        inRange(planes[1], minHSV[1], maxHSV[1], masks[1]);
-        inRange(planes[2], minHSV[2], maxHSV[2], masks[2]);
-        //imshow( "Hue in Range", masks[0] );
-        //imshow( "Sat in Range", masks[1] );
-        //imshow( "Int in Range", masks[2] );
-        //imshow( "Hue", planes[2] );
-
-        //imshow( "Thresholded Image", imgMask );
-        
-        
-        // Blur the segmented image
-        /*Mat blurred;
-        GaussianBlur(imgResult, blurred, Size(0,0), 3);
-        addWeighted(imgResult, 1.5, blurred, -0.5, 0, imgResult);*/
-        
-        // Use opening and closing for noise removal
-        int k = 3;
-        Mat kernel = getStructuringElement(MORPH_RECT, Size(2*k + 1, 2*k + 1), Point(k, k));
-        morphologyEx(imgResult, imgResult, MORPH_OPEN, kernel, Point(-1, -1), 1);
-        morphologyEx(imgResult, imgResult, MORPH_CLOSE, kernel, Point(-1, -1), 1);
-        morphologyEx(imgMask, imgMask, MORPH_OPEN, kernel, Point(-1, -1), 2);
-        morphologyEx(imgMask, imgMask, MORPH_CLOSE, kernel, Point(-1, -1), 2);
-        
-        imshow( "Open/Closed Image", imgMask );
-        
-        // Perform the distance transform algorithm
-        Mat dist;
-        distanceTransform(imgMask, dist, CV_DIST_L2, 3);
-        // Normalize the distance image for range = {0.0, 1.0}
-        // so we can visualize and threshold it
-        normalize(dist, dist, 0, 1., NORM_MINMAX);
-        //imshow("Distance Transform Image", dist);
-        
-        // Threshold to obtain the peaks
-        // This will be the markers for the foreground objects
-        threshold(dist, dist, 0.4, 1., CV_THRESH_BINARY);
-        // Dilate a bit the dist image
-        Mat kernel1 = Mat::ones(3, 3, CV_8UC1);
-        dilate(dist, dist, kernel1);
-        //imshow("Peaks", dist);
-        
-        // Create the CV_8U version of the distance image
-        // It is needed for findContours()
-        Mat dist_8u;
-        dist.convertTo(dist_8u, CV_8U);
-        // Find total markers
-        vector<vector<Point> > contours;
-        findContours(dist_8u, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-        // Create the marker image for the watershed algorithm
-        Mat markers = Mat::zeros(dist.size(), CV_32SC1);
-        // Draw the foreground markers
-        for (size_t i = 0; i < contours.size(); i++)
-            drawContours(markers, contours, static_cast<int>(i), Scalar::all(static_cast<int>(i)+1), -1);
-        // Draw the background marker
-        circle(markers, Point(5,5), 3, CV_RGB(255,255,255), -1);
-        //imshow("Markers", markers*10000);
-        
-        // Perform the watershed algorithm
-        watershed(imgSharp, markers);
-        Mat mark = Mat::zeros(markers.size(), CV_8UC1);
-        markers.convertTo(mark, CV_8UC1);
-        bitwise_not(mark, mark);
-        //    imshow("Markers_v2", mark); // uncomment this if you want to see how the mark
-        // image looks like at that point
-        // Generate random colors
-        vector<Vec3b> colors;
-        for (size_t i = 0; i < contours.size(); i++)
-        {
-            int b = theRNG().uniform(0, 255);
-            int g = theRNG().uniform(0, 255);
-            int r = theRNG().uniform(0, 255);
-            colors.push_back(Vec3b((uchar)b, (uchar)g, (uchar)r));
-        }
-        // Create the result image
-        Mat dst = Mat::zeros(markers.size(), CV_8UC3);
-        // Fill labeled objects with random colors
-        for (int i = 0; i < markers.rows; i++)
-        {
-            for (int j = 0; j < markers.cols; j++)
-            {
-                int index = markers.at<int>(i,j);
-                if (index > 0 && index <= static_cast<int>(contours.size()))
-                    dst.at<Vec3b>(i,j) = colors[index-1];
-                else
-                    dst.at<Vec3b>(i,j) = Vec3b(0,0,0);
-            }
-        }
-        // Visualize the final image
-        imshow("Final Result", dst);
-        imshow("Result", imgResult );
-        
-        
-        
         // Get the detected lines
-        lines = orange::borderLines(dst);
+        lines = orange::borderLines(img);
         
         // Try again if no lines found
         if (lines.size() <= 0) continue;
@@ -284,7 +167,7 @@ int main(int argc, const char * argv[]) {
         vector<Point2f> imgPoints = matToPoints(target);
         
         // Initially choose the basis to be the first edge detected
-        vector<int> imgBasis = {0,1};
+        vector<int> imgBasis = {2,3};
         
         
 

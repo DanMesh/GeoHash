@@ -62,11 +62,11 @@ vector<Vec4i> orange::borderLines(Mat img) {
     double res_theta = CV_PI/180;
     int threshold = 60;
     double minLineLength = 100;
-    double maxLineGap = 20;
+    double maxLineGap = 50;
     
     // Edge detection
     Mat dst;
-    Canny(img, dst, 50, 200);
+    Canny(img, dst, 70, 210, 3, true);
     
     // Line detection
     vector<Vec4i> lines;
