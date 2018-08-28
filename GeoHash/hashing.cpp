@@ -13,12 +13,28 @@ HashTable hashing::createTable(vector<int> basisID, vector<Point2f> modelPoints,
     // Creates a hash table using the given point indices to determine the basis points. All remaining model points are then hashed acording to their basis-relative coordinates
     geo_hash gh(binWidth);
     vector<Point2f> basis = { modelPoints[basisID[0]], modelPoints[basisID[1]] };
+    vector<bin_index> basisBins;
+    
+    // Create a list of the bins that correspond to basis points
+    for (int i = 0; i < basis.size(); i++) {
+        Point2f bc = basisCoords(basis, basis[i]);
+        basisBins.push_back(gh.point_to_bin(point(bc.x, bc.y)));
+    }
     
     for (int j = 0; j < modelPoints.size(); j++) {
         // Do not hash basis or invisible points
         if (j == basisID[0] || j == basisID[1] || !visible[j]) continue;
         Point2f bc = basisCoords(basis, modelPoints[j]);
-        gh.add_point( point(bc.x, bc.y, j) );
+        point pt = point(bc.x, bc.y, j);
+        // Don't add if in a basis bin
+        bool inBin = false;
+        for (int b = 0; b < basisBins.size(); b++) {
+            if (gh.point_to_bin(pt).equals(basisBins[b])) {
+                inBin = true;
+                break;
+            }
+        }
+        if (!inBin) gh.add_point( pt );
     }
     
     return HashTable(gh, basisID, angle_in);

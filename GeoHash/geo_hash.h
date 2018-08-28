@@ -28,6 +28,7 @@ public:
   bin_index() : m_i(0), m_j(0) {}
   int i() const { return m_i; }
   int j() const { return m_j; }
+  bool equals(bin_index bi) { return (i() == bi.i() && j() == bi.j()); }
 private:
   int m_i, m_j;
 };
