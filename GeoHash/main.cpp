@@ -44,7 +44,7 @@ static float intrinsicMatrix[3][3] = {
 };
 static Mat K = Mat(3,3, CV_32FC1, intrinsicMatrix);
 
-static float binWidth = 2;
+static float binWidth = 1;
 static int numBinsX = 12;
 static float defaultZ = 500;
 
@@ -114,7 +114,9 @@ int main(int argc, const char * argv[]) {
         ss << "orangeRect_" << fileNum << ".jpg";
         string s = ss.str();
         img = imread(dataFolder + ss.str(), CV_LOAD_IMAGE_COLOR);
-    
+        
+        img = orange::segmentByColour(img, Vec3b(10, 45, 135));
+        
         // Get the detected lines
         vector<Vec4i> lines = orange::borderLines(img);
         
@@ -134,8 +136,6 @@ int main(int argc, const char * argv[]) {
             line(img, p1, p2, colour, 1);
         }
         
-        imshow("Original", img);
-        
         // Create the Mat of edge endpoints
         Mat target = edgy::edgeToPointsMat(lines[0]);
         for (int i = 1; i < lines.size(); i++) {
@@ -143,6 +143,16 @@ int main(int argc, const char * argv[]) {
             hconcat(target, edgePts, target);
         }
         vector<Point2f> imgPoints = matToPoints(target);
+        
+        // Cluster the edge endpoints to get 4 corners
+        vector<Point2f> clusterPts = edgy::clusterEdges(imgPoints, 4);
+        for (int i = 0; i < clusterPts.size(); i++) {
+            circle(img, Point(clusterPts[i]), 2, Scalar(120, 120, 255));
+        }
+        // Uncomment the line below to use the cluster centres as the corners
+        //imgPoints = clusterPts;
+        
+        imshow("Original", img);
         
         // * * * * * * * * * * * * * *
         //      RECOGNITION
@@ -178,6 +188,7 @@ int main(int argc, const char * argv[]) {
                 Mat newTarget = orderedPoints[1];
                 
                 // Take only 4 correspondences
+                if (newModel.cols <= 0) continue;
                 if (newModel.cols > 4) {
                     newModel = newModel.colRange(0, 4);
                     newTarget = newTarget.rowRange(0, 4);

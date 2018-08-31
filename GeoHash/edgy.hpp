@@ -27,6 +27,7 @@ public:
     static Point2i edgeEndpoint(Vec4i edge, int index);
     static Vec2f edgeToRhoTheta(Vec4i edge);
     static vector<Vec4i> sortSides(vector<Vec4i> sides);
+    static vector<Point2f> clusterEdges(vector<Point2f> edgeEnds, int k);
     
 };
 

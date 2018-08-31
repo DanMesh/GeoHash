@@ -22,9 +22,8 @@ class orange {
 public:
     static vector<Point> getOrangeCorners(Mat img);
     static vector<Vec4i> borderLines(Mat img);
-    // static vector<Point> getCorners(Mat img);
-    static void getCorners(Mat img);
     static vector<Point> linesToCorners(vector<Vec4i> lines);
+    static Mat segmentByColour(Mat img, Vec3b colour);
     
 private:
     static vector<vector<Point>> sortSides(vector<vector<Point>> sides);

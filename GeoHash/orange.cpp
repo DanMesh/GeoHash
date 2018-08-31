@@ -131,10 +131,6 @@ Point orange::intersection(vector<Point> a, vector<Point> b) {
     return Point(x, y);
 }
 
-void orange::getCorners(Mat img) {
-    //TODO
-}
-
 vector<Point> orange::linesToCorners(vector<Vec4i> lines) {
     vector<vector<Point>> sides;
     for( size_t i = 0; i < lines.size(); i++ )
@@ -157,4 +153,38 @@ vector<Point> orange::linesToCorners(vector<Vec4i> lines) {
     }
     
     return shape;
+}
+
+Mat orange::segmentByColour(Mat img, Vec3b colour) {
+    
+    // Convert colour to HSV
+    Mat3b bgr(colour);
+    Mat3b hsv;
+    cvtColor(bgr, hsv, COLOR_BGR2HSV);
+    Vec3b hsvPixel(hsv.at<Vec3b>(0,0));
+    
+    // Establish H, S, V ranges
+    int thr[3] = {50, 50, 50};
+    Scalar minHSV = Scalar(hsvPixel.val[0] - thr[0], hsvPixel.val[1] - thr[1], hsvPixel.val[2] - thr[2]);
+    Scalar maxHSV = Scalar(hsvPixel.val[0] + thr[0], hsvPixel.val[1] + thr[1], hsvPixel.val[2] + thr[2]);
+    
+    // * * * * * * * * * *
+    //      Blur & Sharpen
+    // * * * * * * * * * *
+    
+    Mat blurred, sharp;
+    int k = 3;
+    GaussianBlur(img, blurred, Size(k,k), 1);
+    addWeighted(img, 1.5, blurred, -0.5, 0, sharp);
+    
+    // * * * * * * * * * *
+    //      Segment
+    // * * * * * * * * * *
+    
+    Mat imgHSV, imgMask, imgResult;
+    cvtColor(sharp, imgHSV, COLOR_BGR2HSV);
+    inRange(imgHSV, minHSV, maxHSV, imgMask);
+    bitwise_and(img, img, imgResult, imgMask);
+    
+    return imgResult;
 }

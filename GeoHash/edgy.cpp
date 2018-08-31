@@ -99,3 +99,14 @@ vector<Vec4i> edgy::sortSides(vector<Vec4i> sides) {
     }
     return sides;
 }
+
+vector<Point2f> edgy::clusterEdges(vector<Point2f> edgeEnds, int k) {
+    vector<Point2f> newEnds;
+    vector<int> labels;
+    int attempts = 5;
+    double eps = 0.001;
+    double compactness = kmeans(edgeEnds, k, labels,
+                                TermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, attempts, eps),
+                                attempts, KMEANS_PP_CENTERS, newEnds);
+    return newEnds;
+}
