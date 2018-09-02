@@ -155,10 +155,10 @@ vector<Point> orange::linesToCorners(vector<Vec4i> lines) {
     return shape;
 }
 
-Mat orange::segmentByColour(Mat img, Vec3b colour) {
+Mat orange::segmentByColour(Mat img, Scalar colour) {
     
     // Convert colour to HSV
-    Mat3b bgr(colour);
+    Mat bgr(1 ,1 , CV_8UC3, colour);
     Mat3b hsv;
     cvtColor(bgr, hsv, COLOR_BGR2HSV);
     Vec3b hsvPixel(hsv.at<Vec3b>(0,0));

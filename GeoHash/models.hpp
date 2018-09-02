@@ -26,11 +26,14 @@ public:
     virtual vector<bool> visibilityMask(float xAngle, float yAngle) = 0;
     vector<Point3f> getVertices() {return vertices;};
     vector<vector<int>> getEdgeBasisList() {return edgeBasisList;}
-    virtual Mat pointsToMat() = 0;
-    virtual void draw(Mat img, Vec6f pose, Mat K, Scalar colour = Scalar(255, 255, 255)) = 0;
+    Mat pointsToMat();
+    virtual void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour = Scalar(255, 255, 255)) = 0;
+    Scalar colour = Scalar(255, 255, 255);
+    
 protected:
     vector<Point3f> vertices;
     vector<vector<int>> edgeBasisList;
+    
 };
 
 
@@ -55,8 +58,7 @@ public:
     }
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
     vector<bool> visibilityMask(float xAngle, float yAngle);
-    Mat pointsToMat();
-    void draw(Mat img, Vec6f pose, Mat K, Scalar colour);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
     
 private:
     static const vector<vector<float>> xAngleLimits;
@@ -72,7 +74,7 @@ private:
 
 class Rectangle : public Model {
 public:
-    Rectangle(float width, float height) {
+    Rectangle(float width, float height, Scalar colourIn) {
         createPoints(width, height);
         edgeBasisList = {
             {0,1}, {1,2}, {2,3}, {3,0},
@@ -84,15 +86,43 @@ public:
             {0,4}, {1,5}, {2,6}, {3,7},
             {4,0}, {5,1}, {6,2}, {7,3}
         };
+        colour = colourIn;
     }
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
     vector<bool> visibilityMask(float xAngle, float yAngle);
-    Mat pointsToMat();
-    void draw(Mat img, Vec6f pose, Mat K, Scalar colour);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
     
 private:
     void createPoints(float width, float height);
 };
+
+
+// * * * * * * * * * * * * * * *
+//      Dog
+// * * * * * * * * * * * * * * *
+
+class Dog : public Model {
+public:
+    Dog(Scalar colourIn);
+    bool vertexIsVisible(int vertexID, float xAngle, float yAngle) {return true;};
+    vector<bool> visibilityMask(float xAngle, float yAngle);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
+};
+
+
+// * * * * * * * * * * * * * * *
+//      Arrow
+// * * * * * * * * * * * * * * *
+
+class Arrow : public Model {
+public:
+    Arrow(Scalar colourIn);
+    bool vertexIsVisible(int vertexID, float xAngle, float yAngle) {return true;};
+    vector<bool> visibilityMask(float xAngle, float yAngle);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
+};
+
+
 
 
 /*

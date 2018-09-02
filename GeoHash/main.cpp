@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
     vector<HashTable> tables;
     
     //Model * model = new Box(60, 80, 30);
-    Model * model = new Rectangle(60, 80);
+    Model * model = new Rectangle(60, 80, Scalar(10, 45, 135));
     Mat modelMat = model->pointsToMat();
     vector<Point3f> modelPoints = model->getVertices();
     
@@ -115,7 +115,7 @@ int main(int argc, const char * argv[]) {
         string s = ss.str();
         img = imread(dataFolder + ss.str(), CV_LOAD_IMAGE_COLOR);
         
-        img = orange::segmentByColour(img, Vec3b(10, 45, 135));
+        img = orange::segmentByColour(img, model->colour);
         
         // Get the detected lines
         vector<Vec4i> lines = orange::borderLines(img);
