@@ -27,7 +27,7 @@ public:
     vector<Point3f> getVertices() {return vertices;};
     vector<vector<int>> getEdgeBasisList() {return edgeBasisList;}
     Mat pointsToMat();
-    virtual void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour = Scalar(255, 255, 255)) = 0;
+    virtual void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour = Scalar(255, 255, 255), int rotOrder = lsq::ROT_XYZ) = 0;
     Scalar colour = Scalar(255, 255, 255);
     
 protected:
@@ -58,7 +58,7 @@ public:
     }
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
     vector<bool> visibilityMask(float xAngle, float yAngle);
-    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour, int rotOrder);
     
 private:
     static const vector<vector<float>> xAngleLimits;
@@ -90,7 +90,7 @@ public:
     }
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
     vector<bool> visibilityMask(float xAngle, float yAngle);
-    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour, int rotOrder);
     
 private:
     void createPoints(float width, float height);
@@ -106,7 +106,7 @@ public:
     Dog(Scalar colourIn);
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle) {return true;};
     vector<bool> visibilityMask(float xAngle, float yAngle);
-    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour, int rotOrder);
 };
 
 
@@ -119,7 +119,7 @@ public:
     Arrow(Scalar colourIn);
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle) {return true;};
     vector<bool> visibilityMask(float xAngle, float yAngle);
-    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour);
+    void draw(Mat img, Vec6f pose, Mat K, Scalar drawColour, int rotOrder);
 };
 
 

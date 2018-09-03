@@ -202,10 +202,13 @@ int main(int argc, const char * argv[]) {
                     cout << "* * * Only " << newModel.cols << " correspondences!!" << endl;
                 }
                 
-                float xAngle = dA * (0.5 + t.viewAngle[0]);
-                float yAngle = (dA * (0.5 + t.viewAngle[1])) - CV_PI/2;
-                Vec6f poseInit = {0, 0, defaultZ, xAngle, yAngle, 0};
-                estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
+                // * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                //      Initial Pose Estimate
+                //      My own assumption
+                // * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                
+                Vec6f poseInit = {0, 0, defaultZ, -CV_PI/4, 0, 0};
+                estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K, lsq::ROT_ZXY);
                 
                 if (est.iterations != lsq::MAX_ITERATIONS && est.pose[2] > 0 && !isnan(est.error)) {
                     //TRACE
@@ -235,7 +238,7 @@ int main(int argc, const char * argv[]) {
             sort(estList.begin(), estList.end());
             Mat imgResult;
             img.copyTo(imgResult);
-            model->draw(imgResult, estList[0].pose, K, Scalar(0,0,255));
+            model->draw(imgResult, estList[0].pose, K, Scalar(0,0,255), lsq::ROT_ZXY);
             imshow("imgResult", imgResult);
             cout << "\nSmallest error = \n"; estList[0].print();
         }

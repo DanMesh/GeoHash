@@ -49,10 +49,10 @@ class lsq {
     METHODS
  */
 public:
-    static estimate poseEstimateLM(Vec6f pose1, Mat x, Mat target, Mat K);
+    static estimate poseEstimateLM(Vec6f pose1, Mat x, Mat target, Mat K, int rotOrder = ROT_XYZ);
     static Mat translation(float x, float y, float z);
-    static Mat rotation(float x, float y, float z);
-    static Mat projection(Vec6f pose, Mat x, Mat K);
+    static Mat rotation(float x, float y, float z, int order = ROT_XYZ);
+    static Mat projection(Vec6f pose, Mat x, Mat K, int rotOrder = ROT_XYZ);
     static float projectionError(Mat target, Mat proj);
     static Mat pointsAsCol(Mat points);
     static Mat jacobian(Vec6f pose, Mat x, Mat K);
@@ -63,6 +63,8 @@ public:
 public:
     static const int MAX_ITERATIONS = 20;
     static const int ERROR_THRESHOLD = 10;
+    static const int ROT_XYZ = 0;
+    static const int ROT_ZXY = 1;
 
 };
 

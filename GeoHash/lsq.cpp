@@ -8,13 +8,13 @@
 
 #include "lsq.hpp"
 
-estimate lsq::poseEstimateLM(Vec6f pose1, Mat model, Mat target, Mat K) {
+estimate lsq::poseEstimateLM(Vec6f pose1, Mat model, Mat target, Mat K, int rotOrder) {
     // pose1: imitial pose parameters
     // model: model points in full homogeneous coords
     // target: image points, in 2D coords
     // K: intrinsic matrix
         
-    Mat y1 = lsq::projection(pose1, model, K);
+    Mat y1 = lsq::projection(pose1, model, K, rotOrder);
     float E = lsq::projectionError(target, y1);
     
     float lambda = 0;
@@ -24,7 +24,7 @@ estimate lsq::poseEstimateLM(Vec6f pose1, Mat model, Mat target, Mat K) {
     while (E > ERROR_THRESHOLD && iterations < MAX_ITERATIONS) {
         Mat J = lsq::jacobian(pose1, model, K);
         Mat eps;
-        subtract(lsq::projection(pose1, model, K).rowRange(0, 2).t(), target, eps);
+        subtract(lsq::projection(pose1, model, K, rotOrder).rowRange(0, 2).t(), target, eps);
         eps = lsq::pointsAsCol(eps.t());
         Mat Jp = J.t() * J + lambda * Mat::eye(6,6,CV_32FC1);
         Jp = -Jp.inv() * J.t();
@@ -35,7 +35,7 @@ estimate lsq::poseEstimateLM(Vec6f pose1, Mat model, Mat target, Mat K) {
             pose2[i] += del.at<float>(i);
         }
         
-        Mat y2 = lsq::projection(pose2, model, K);
+        Mat y2 = lsq::projection(pose2, model, K, rotOrder);
         float E2 = lsq::projectionError(target, y2);
         /*
         if (E2 < E) {
@@ -62,7 +62,7 @@ Mat lsq::translation(float x, float y, float z) {
     return Mat(3, 1, CV_32FC1, tmp) * 1;
 }
 
-Mat lsq::rotation(float x, float y, float z) {
+Mat lsq::rotation(float x, float y, float z, int order) {
     // Rotate about the x, y then z axes with the given angles in radians
     float rotX[3][3] = {
         { 1,       0,       0 },
@@ -84,12 +84,13 @@ Mat lsq::rotation(float x, float y, float z) {
     Mat rY = Mat(3, 3, CV_32FC1, rotY);
     Mat rZ = Mat(3, 3, CV_32FC1, rotZ);
     
-    return rZ * rY * rX;
+    if (order == ROT_ZXY) return rY * rX * rZ;
+    else return rZ * rY * rX;
 }
 
-Mat lsq::projection(Vec6f pose, Mat model, Mat K) {
+Mat lsq::projection(Vec6f pose, Mat model, Mat K, int rotOrder) {
     Mat P;
-    hconcat( rotation(pose[3], pose[4], pose[5]) , translation(pose[0], pose[1], pose[2]) , P);
+    hconcat( rotation(pose[3], pose[4], pose[5], rotOrder) , translation(pose[0], pose[1], pose[2]) , P);
     Mat y = (K * P) * model;
     
     Mat z = y.row(2);

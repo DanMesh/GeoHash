@@ -172,17 +172,16 @@ Mat orange::segmentByColour(Mat img, Scalar colour) {
     //      Blur & Sharpen
     // * * * * * * * * * *
     
-    Mat blurred, sharp;
+    Mat blurred;
     int k = 3;
     GaussianBlur(img, blurred, Size(k,k), 1);
-    addWeighted(img, 1.5, blurred, -0.5, 0, sharp);
     
     // * * * * * * * * * *
     //      Segment
     // * * * * * * * * * *
     
     Mat imgHSV, imgMask, imgResult;
-    cvtColor(sharp, imgHSV, COLOR_BGR2HSV);
+    cvtColor(blurred, imgHSV, COLOR_BGR2HSV);
     inRange(imgHSV, minHSV, maxHSV, imgMask);
     bitwise_and(img, img, imgResult, imgMask);
     
