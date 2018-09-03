@@ -67,7 +67,10 @@ int main(int argc, const char * argv[]) {
     vector<HashTable> tables;
     
     //Model * model = new Box(60, 80, 30);
-    Model * model = new Rectangle(60, 80, Scalar(10, 45, 135));
+    //Model * model = new Rectangle(60, 80, Scalar(20, 65, 165));
+    //Model * model = new Dog(Scalar(19, 89, 64));
+    Model * model = new Arrow(Scalar(108, 79, 28));
+    
     Mat modelMat = model->pointsToMat();
     vector<Point3f> modelPoints = model->getVertices();
     
@@ -109,13 +112,14 @@ int main(int argc, const char * argv[]) {
     vector<Vec4i> lines;
     int fileNum = 1;
     
-    while(fileNum <= 9) {
+    while(fileNum <= 3) {
         stringstream ss;
-        ss << "orangeRect_" << fileNum << ".jpg";
+        //ss << "orangeRect_" << fileNum << ".jpg";
+        ss << "Trio_" << fileNum << ".jpg";
         string s = ss.str();
         img = imread(dataFolder + ss.str(), CV_LOAD_IMAGE_COLOR);
         
-        img = orange::segmentByColour(img, model->colour);
+        img = orange::segmentByColour(img, model->colour);imshow("Originallll", img);
         
         // Get the detected lines
         vector<Vec4i> lines = orange::borderLines(img);

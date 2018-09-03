@@ -61,8 +61,8 @@ public:
     CONSTANTS
  */
 public:
-    static const int MAX_ITERATIONS = 15;
-    static const int ERROR_THRESHOLD = 30;
+    static const int MAX_ITERATIONS = 20;
+    static const int ERROR_THRESHOLD = 10;
 
 };
 

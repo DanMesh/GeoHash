@@ -61,8 +61,8 @@ vector<Vec4i> orange::borderLines(Mat img) {
     double res_rho = 5;
     double res_theta = CV_PI/180;
     int threshold = 60;
-    double minLineLength = 100;
-    double maxLineGap = 50;
+    double minLineLength = 50;
+    double maxLineGap = 30;
     
     // Edge detection
     Mat dst;
@@ -164,7 +164,7 @@ Mat orange::segmentByColour(Mat img, Scalar colour) {
     Vec3b hsvPixel(hsv.at<Vec3b>(0,0));
     
     // Establish H, S, V ranges
-    int thr[3] = {50, 50, 50};
+    int thr[3] = {30, 50, 50};
     Scalar minHSV = Scalar(hsvPixel.val[0] - thr[0], hsvPixel.val[1] - thr[1], hsvPixel.val[2] - thr[2]);
     Scalar maxHSV = Scalar(hsvPixel.val[0] + thr[0], hsvPixel.val[1] + thr[1], hsvPixel.val[2] + thr[2]);
     
@@ -185,6 +185,17 @@ Mat orange::segmentByColour(Mat img, Scalar colour) {
     cvtColor(sharp, imgHSV, COLOR_BGR2HSV);
     inRange(imgHSV, minHSV, maxHSV, imgMask);
     bitwise_and(img, img, imgResult, imgMask);
+    
+    //return imgResult;
+    
+    // * * * * * * * * * *
+    //      Open/Close
+    // * * * * * * * * * *
+    
+    k = 1;
+    Mat kernel = getStructuringElement(MORPH_RECT, Size(2*k + 1, 2*k + 1), Point(k, k));
+    morphologyEx(imgResult, imgResult, MORPH_OPEN, kernel, Point(-1, -1), 1);
+    morphologyEx(imgResult, imgResult, MORPH_CLOSE, kernel, Point(-1, -1), 1);
     
     return imgResult;
 }
