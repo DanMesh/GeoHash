@@ -20,14 +20,9 @@ using namespace cv;
 
 class orange {
 public:
-    static vector<Point> getOrangeCorners(Mat img);
     static vector<Vec4i> borderLines(Mat img);
-    static vector<Point> linesToCorners(vector<Vec4i> lines);
     static Mat segmentByColour(Mat img, Scalar colour);
     
-private:
-    static vector<vector<Point>> sortSides(vector<vector<Point>> sides);
-    static Point intersection(vector<Point> a, vector<Point> b);
 };
 
 #endif /* orange_hpp */

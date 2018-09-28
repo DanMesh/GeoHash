@@ -11,6 +11,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <stdio.h>
+#include "lsq.hpp"
 
 using namespace std;
 using namespace cv;
