@@ -208,7 +208,7 @@ int main(int argc, const char * argv[]) {
                 // * * * * * * * * * * * * * * * * * * * * * * * * * * *
                 
                 Vec6f poseInit = {0, 0, defaultZ, -CV_PI/4, 0, 0};
-                estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K, lsq::ROT_ZXY);
+                estimate est = lsq::poseEstimateLM(poseInit, newModel, newTarget, K);
                 
                 if (est.iterations != lsq::MAX_ITERATIONS && est.pose[2] > 0 && !isnan(est.error)) {
                     //TRACE
@@ -238,7 +238,7 @@ int main(int argc, const char * argv[]) {
             sort(estList.begin(), estList.end());
             Mat imgResult;
             img.copyTo(imgResult);
-            model->draw(imgResult, estList[0].pose, K, Scalar(0,0,255), lsq::ROT_ZXY);
+            model->draw(imgResult, estList[0].pose, K, Scalar(0,0,255));
             imshow("imgResult", imgResult);
             cout << "\nSmallest error = \n"; estList[0].print();
         }
