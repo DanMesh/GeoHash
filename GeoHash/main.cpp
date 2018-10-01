@@ -101,12 +101,19 @@ int main(int argc, const char * argv[]) {
     // * * * * * * * * * * * * * * * * *
     //   Create a fake image
     // * * * * * * * * * * * * * * * * *
-    
-    Vec6f pose = {70, 12, 350, CV_PI/4, CV_PI/5, CV_PI/6};
+    /*
+    Vec6f pose = {70, 12, 350, CV_PI/5, CV_PI/5, CV_PI/6};
     
     // Draw an actual fake image
     Mat img = Mat(720, 1280, CV_8UC3);
     model->draw(img, pose, K);
+    */
+    Mat img;
+    string dataFolder = "../../../../../data/";
+    String filename = "BlueBox.png";
+    VideoCapture cap(dataFolder + filename);
+    if(!cap.isOpened()) return -1;
+    cap >> img;
     
     // Get the detected lines
     vector<Vec4i> lines = orange::borderLines(img);
@@ -205,15 +212,17 @@ int main(int argc, const char * argv[]) {
     cout << endl << estList.size() << " successes!" << endl;
     
     // TRACE
-    if (estList.size() > 0) {
-        sort(estList.begin(), estList.end());
+    //if (estList.size() > 0) {
+    for (int e = 0; e < estList.size(); e++) {
+        //sort(estList.begin(), estList.end());
         Mat imgResult;
         img.copyTo(imgResult);
-        Mat tmp = Mat(720, 1280, CV_8UC3);
-        model->draw(tmp, estList[0].pose, K, Scalar(0,0,255));
+        Mat tmp = Mat(img.rows, img.cols, img.type());
+        model->draw(imgResult, estList[e].pose, K, Scalar(0,0,255));
         addWeighted(imgResult, 0.4, tmp, 0.6, 0, imgResult);
         imshow("imgResult", imgResult);
-        cout << "\nSmallest error = \n"; estList[0].print();
+        //cout << "\nSmallest error = \n"; estList[e].print();
+        waitKey(0);
     }
 
     waitKey(0);
