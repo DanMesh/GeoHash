@@ -60,17 +60,17 @@ vector<Vec4i> orange::borderLines(Mat img) {
     // Resolutions of the rho and theta parameters of the lines
     double res_rho = 1;
     double res_theta = CV_PI/180;
-    int threshold = 60;
-    double minLineLength = 50;
-    double maxLineGap = 20;
+    int threshold = 30;
+    double minLineLength = 5;
+    double maxLineGap = 10;
     
     // Edge detection
     Mat dst;
-    Canny(img, dst, 50, 200);
+    Canny(img, dst, 40, 120);
     
     // Line detection
     vector<Vec4i> lines;
-    while ((lines.size() < 4) && (threshold > 0)) {
+    while ((lines.size() < 3) && (threshold > 0)) {
         HoughLinesP(dst, lines, res_rho, res_theta, threshold, minLineLength, maxLineGap);
         threshold -= 5;
     }

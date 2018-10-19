@@ -62,7 +62,7 @@ public:
  */
 public:
     static const int MAX_ITERATIONS = 15;
-    static const int ERROR_THRESHOLD = 30;
+    static const float ERROR_THRESHOLD;
 
 };
 

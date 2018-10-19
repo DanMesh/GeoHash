@@ -89,7 +89,7 @@ Mat Box::pointsToMat() {
     return ret * 1;
 }
 
-void Box::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
+void Box::draw(Mat img, Vec6f pose, Mat K, bool lines, Scalar colour) {
     Mat proj = lsq::projection(pose, pointsToMat(), K);
     
     // Create a list of points
@@ -117,7 +117,9 @@ void Box::draw(Mat img, Vec6f pose, Mat K, Scalar colour) {
         };
         const Point* ppt[1] = {pts[0]};
         int npt[] = {4};
-        fillPoly(img, ppt, npt, 1, colour*(1 - i*0.1));
+        
+        if (lines) polylines(img, ppt, npt, 1, true, colour, 1);
+        else fillPoly(img, ppt, npt, 1, colour*(1 - i*0.1));
     }
 }
 

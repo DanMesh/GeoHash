@@ -27,7 +27,7 @@ public:
     vector<Point3f> getVertices() {return vertices;};
     vector<vector<int>> getEdgeBasisList() {return edgeBasisList;}
     virtual Mat pointsToMat() = 0;
-    virtual void draw(Mat img, Vec6f pose, Mat K, Scalar colour = Scalar(255, 255, 255)) = 0;
+    virtual void draw(Mat img, Vec6f pose, Mat K, bool lines = false, Scalar colour = Scalar(255, 255, 255)) = 0;
 protected:
     vector<Point3f> vertices;
     vector<vector<int>> edgeBasisList;
@@ -56,7 +56,7 @@ public:
     bool vertexIsVisible(int vertexID, float xAngle, float yAngle);
     vector<bool> visibilityMask(float xAngle, float yAngle);
     Mat pointsToMat();
-    void draw(Mat img, Vec6f pose, Mat K, Scalar colour);
+    void draw(Mat img, Vec6f pose, Mat K, bool lines, Scalar colour);
     
 private:
     static const vector<vector<float>> xAngleLimits;

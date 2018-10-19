@@ -64,8 +64,13 @@ int main(int argc, const char * argv[]) {
     
     vector<HashTable> tables;
     
-    Model * model = new Box(60, 80, 30);
+    Model * modelTest = new Box(60, 80, 30);
+    Model * modelBrownBox = new Box(204, 257, 70);
+    Model * modelYellowBox = new Box(175, 210, 49);
+    Model * modelBlueBox = new Box(300, 400, 75);
     //Model * model = new Rectangle(60, 80);
+    
+    Model * model = modelTest;
     Mat modelMat = model->pointsToMat();
     vector<Point3f> modelPoints = model->getVertices();
     
@@ -101,20 +106,23 @@ int main(int argc, const char * argv[]) {
     // * * * * * * * * * * * * * * * * *
     //   Create a fake image
     // * * * * * * * * * * * * * * * * *
-    /*
+    
     Vec6f pose = {70, 12, 350, CV_PI/5, CV_PI/5, CV_PI/6};
     
     // Draw an actual fake image
     Mat img = Mat(720, 1280, CV_8UC3);
-    model->draw(img, pose, K);
-    */
+    model->draw(img, pose, K, false, Scalar(150, 50, 20));
+    circle(img, Point(950,400), 100, Scalar(0,0,0), -1); // Occluding circle
+    Mat frameOrig;
+    img.copyTo(frameOrig);
+    /*
     Mat img;
     string dataFolder = "../../../../../data/";
     String filename = "BlueBox.png";
     VideoCapture cap(dataFolder + filename);
     if(!cap.isOpened()) return -1;
     cap >> img;
-    
+    */  
     // Get the detected lines
     vector<Vec4i> lines = orange::borderLines(img);
     
@@ -149,7 +157,6 @@ int main(int argc, const char * argv[]) {
     // * * * * * * * * * * * * * *
     
     auto startRecog = chrono::system_clock::now(); // Start recognition timer
-    auto endRecog1 = startRecog;                    // Placeholder for the first end time
     
     vector<estimate> estList;       // List if pose estimates
     int edge = 0;                   // The detected edge to use as a basis
@@ -194,7 +201,7 @@ int main(int argc, const char * argv[]) {
             
                 est.print();
                 estList.push_back(est);
-                if (estList.size() == 1) endRecog1 = chrono::system_clock::now();
+                if (estList.size() == 1) break;
             }
         }
         edge++;
@@ -206,8 +213,6 @@ int main(int argc, const char * argv[]) {
     cout << "Hashing time     = " << timeHash.count()*1000.0 << " ms" << endl;
     chrono::duration<double> timeRecog = endRecog-startRecog;
     cout << "Recognition time = " << timeRecog.count()*1000.0 << " ms" << endl;
-    chrono::duration<double> timeRecog1 = endRecog1-startRecog;
-    cout << "First match time = " << timeRecog1.count()*1000.0 << " ms" << endl;
     
     cout << endl << estList.size() << " successes!" << endl;
     
@@ -216,10 +221,8 @@ int main(int argc, const char * argv[]) {
     for (int e = 0; e < estList.size(); e++) {
         //sort(estList.begin(), estList.end());
         Mat imgResult;
-        img.copyTo(imgResult);
-        Mat tmp = Mat(img.rows, img.cols, img.type());
-        model->draw(imgResult, estList[e].pose, K, Scalar(0,0,255));
-        addWeighted(imgResult, 0.4, tmp, 0.6, 0, imgResult);
+        frameOrig.copyTo(imgResult);
+        model->draw(imgResult, estList[e].pose, K, true, Scalar(0,0,255));
         imshow("imgResult", imgResult);
         //cout << "\nSmallest error = \n"; estList[e].print();
         waitKey(0);
